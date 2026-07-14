@@ -10,15 +10,22 @@ const AUTH_ROUTE_PREFIXES = [
 
 const PROTECTED_PREFIXES = [
   "/profile",
-  "/dashboard",
   "/customer",
   "/dealer",
   "/admin",
 ];
 
-function getDashboardPath(_role?: UserRole | null) {
-  // All roles land on the same smart general dashboard
-  return "/dashboard";
+function getDashboardPath(role: UserRole | undefined | null) {
+  switch (role) {
+    case "customer":
+      return "/customer/dashboard";
+    case "dealer":
+      return "/dealer/dashboard";
+    case "admin":
+      return "/admin/dashboard";
+    default:
+      return "/profile";
+  }
 }
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
@@ -36,20 +43,22 @@ export function middleware(request: NextRequest) {
   const isAuthRoute = matchesPrefix(pathname, AUTH_ROUTE_PREFIXES);
   const isProtectedRoute = matchesPrefix(pathname, PROTECTED_PREFIXES);
 
-  // Handle legacy/unprefixed `/dashboard` path by redirecting to login if unauthenticated.
+  // Allow `/dashboard` to be a unified landing page for authenticated users.
+  // If unauthenticated, redirect to login preserving `next` param.
   if (pathname === "/dashboard") {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname + search);
       return NextResponse.redirect(loginUrl);
     }
-    // If authenticated and on /dashboard, do nothing, just let them in.
+
+    return NextResponse.next();
   }
 
   if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(
-      new URL(getDashboardPath(role), request.url),
-    );
+    // If an authenticated user visits auth routes, send them to the
+    // unified main dashboard where they can choose next steps.
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   if (isProtectedRoute && !isAuthenticated) {
@@ -58,22 +67,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const lowerRole = role?.toLowerCase();
-
   if (
     isProtectedRoute &&
-    lowerRole &&
+    role &&
     pathname.startsWith("/customer") &&
-    lowerRole !== "customer"
+    role !== "customer"
   ) {
     return NextResponse.redirect(new URL(getDashboardPath(role), request.url));
   }
 
-  if (isProtectedRoute && pathname.startsWith("/dealer") && lowerRole !== "dealer") {
+  if (isProtectedRoute && pathname.startsWith("/dealer") && role !== "dealer") {
     return NextResponse.redirect(new URL(getDashboardPath(role), request.url));
   }
 
-  if (isProtectedRoute && pathname.startsWith("/admin") && lowerRole !== "admin") {
+  if (isProtectedRoute && pathname.startsWith("/admin") && role !== "admin") {
     return NextResponse.redirect(new URL(getDashboardPath(role), request.url));
   }
 

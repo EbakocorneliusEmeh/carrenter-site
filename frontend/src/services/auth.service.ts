@@ -9,7 +9,7 @@ import type {
   RegisterPayload,
   ResetPasswordPayload,
 } from "@/types/auth.types";
-import { api, refreshClient, normalizeTokens, unwrapApiData } from "@/services/axios";
+import { api, refreshClient, normalizeTokens, unwrapApiData } from "@/lib/axios";
 import { clearAuthSession, getRefreshToken, setAuthSession } from "@/utils/tokenStorage";
 import axios from "axios";
 
@@ -33,7 +33,7 @@ function normalizeUser(payload: any): AuthUser | null {
     fullName: user.fullName ?? user.name ?? "",
     email: user.email ?? "",
     phone: user.phone ?? "",
-    role: user.role ?? "customer",
+    role: typeof user.role === "string" ? user.role.toLowerCase() : "customer",
     businessName: user.businessName ?? null,
     avatarUrl: user.avatarUrl ?? null,
   };
@@ -130,13 +130,21 @@ export async function refreshSession() {
     return null;
   }
 
-  const currentUser = normalizeUser(response.data);
-  setAuthSession(tokens, currentUser);
+  // Save new tokens immediately so subsequent requests use the fresh access token
+  setAuthSession(tokens, null);
 
-  return {
-    tokens,
-    user: currentUser,
-  };
+  // Now fetch the real user from DB (the only reliable source of the current role)
+  try {
+    const freshUser = await fetchUserProfile();
+    if (freshUser) {
+      setAuthSession(tokens, freshUser);
+      return { tokens, user: freshUser };
+    }
+  } catch {
+    // If profile fetch fails, return just the tokens with no user
+  }
+
+  return { tokens, user: null };
 }
 
 export async function fetchMe() {
@@ -183,8 +191,29 @@ export async function updateDealerProfile(payload: BecomeDealerPayload) {
 export async function logout() {
   const refreshToken = getRefreshToken();
 
+  // If there's no refresh token we still want to clear local session state
+  if (!refreshToken) {
+    clearAuthSession();
+    return;
+  }
+
   try {
     await api.post("/api/v1/auth/logout", { refreshToken });
+  } catch (err: unknown) {
+    // Network errors or server issues during logout should not block
+    // client-side session cleanup. Log a helpful message for debugging.
+    if (axios.isAxiosError(err) && !err.response) {
+      // Likely the auth server is down or incorrect baseURL
+      // Keep behavior quiet in production but warn in dev
+      // eslint-disable-next-line no-console
+      console.warn(
+        `Logout request failed (network): cannot reach ${api.defaults.baseURL}`,
+        err,
+      );
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn("Logout request failed:", err);
+    }
   } finally {
     clearAuthSession();
   }

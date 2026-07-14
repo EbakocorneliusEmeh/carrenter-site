@@ -1,0 +1,143 @@
+.pageContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.secondaryBtn,
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.secondaryBtn {
+  background: var(--surface-strong);
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+}
+
+.secondaryBtn:hover,
+.backLink:hover {
+  opacity: 0.85;
+}
+
+.backLink {
+  color: var(--primary);
+}
+
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.messageBox,
+.errorBox {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  color: var(--text);
+}
+
+.errorBox {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.businessCard {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.banner {
+  width: 100%;
+  min-height: 220px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--surface-strong);
+}
+
+.cardContent {
+  padding: 28px;
+}
+
+.headline {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 2px solid var(--surface-border);
+}
+
+.pageSlug {
+  color: var(--primary);
+  font-family: monospace;
+  margin-top: 6px;
+}
+
+.category {
+  display: inline-flex;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: var(--surface-strong);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.description {
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+}
+
+.detailsGrid strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.detailsGrid p {
+  margin: 0;
+  color: var(--text-muted);
+}

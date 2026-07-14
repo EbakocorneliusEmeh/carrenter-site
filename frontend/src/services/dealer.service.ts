@@ -3,7 +3,7 @@ import type {
   DealerPage,
   UpdateDealerPagePayload,
 } from "@/types/auth.types";
-import { api, unwrapApiData } from "@/services/axios";
+import { api, unwrapApiData } from "@/lib/axios";
 
 export async function createDealerPage(payload: CreateDealerPagePayload) {
   const response = await api.post("/api/v1/dealer/pages", payload);
@@ -17,6 +17,13 @@ export async function listDealerPages() {
 
 export async function getDealerPage(id: string) {
   const response = await api.get(`/api/v1/dealer/pages/${id}`);
+  return unwrapApiData<DealerPage>(response.data);
+}
+
+export async function getDealerPageBySlug(slug: string) {
+  const response = await api.get(
+    `/api/v1/dealer/pages/${encodeURIComponent(slug)}`,
+  );
   return unwrapApiData<DealerPage>(response.data);
 }
 

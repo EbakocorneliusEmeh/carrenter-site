@@ -28,6 +28,8 @@ import {
 } from "@/services/auth.service";
 import {
   clearAuthSession,
+  getAccessToken,
+  getRefreshToken,
   getStoredUser,
   hasStoredSession,
   setAuthSession,
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedUser = getStoredUser();
       const hasSession = hasStoredSession();
 
+      // Immediately show cached user so UI doesn't flash empty
       if (storedUser) {
         setUser(storedUser);
       }
@@ -72,18 +75,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Try to refresh tokens first (gets fresh access token)
+      try {
+        await refreshSessionRequest();
+      } catch {
+        // Ignore — we'll still try fetchMe with the existing token
+      }
+
+      // Always fetch the live user profile from the DB.
+      // This is the ONLY reliable source of the current role.
       try {
         const currentUser = await fetchMe();
         if (isMounted) {
           setUser(currentUser);
           setAuthError(null);
+          // Re-save so the role cookie is updated for middleware
+          const currentAccess = getAccessToken();
+          const currentRefresh = getRefreshToken();
+          if (currentAccess && currentRefresh) {
+            setAuthSession(
+              { accessToken: currentAccess, refreshToken: currentRefresh },
+              currentUser
+            );
+          }
         }
-      } catch (error) {
-        const message = getFriendlyError(error);
+      } catch (error: any) {
         if (isMounted) {
-          setAuthError(message);
-          clearAuthSession();
-          setUser(null);
+          // Only wipe the session if the token is genuinely invalid (401).
+          // Network errors or 5xx should not log the user out.
+          const status = error?.response?.status;
+          if (status === 401) {
+            clearAuthSession();
+            setUser(null);
+          } else {
+            // Fall back to whatever we already have from localStorage
+            // (storedUser was already set above)
+          }
         }
       } finally {
         if (isMounted) {

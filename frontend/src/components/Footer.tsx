@@ -16,7 +16,6 @@ export default function Footer() {
           <Link href="/">Home</Link>
           <Link href="/login">Login</Link>
           <Link href="/register">Register</Link>
-          <Link href="/profile">Profile</Link>
         </nav>
       </div>
     </footer>

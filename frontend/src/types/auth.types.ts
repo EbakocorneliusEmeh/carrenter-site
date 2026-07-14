@@ -47,7 +47,7 @@ export interface BecomeDealerPayload {
   businessName: string;
 }
 
-export type DealerPageStatus = "active" | "inactive" | "draft";
+export type DealerPageStatus = "ACTIVE" | "INACTIVE" | "ARCHIVED" | "DRAFT";
 
 export interface DealerPage {
   id: string;
@@ -56,6 +56,15 @@ export interface DealerPage {
   slug: string;
   description?: string | null;
   status: DealerPageStatus;
+  businessType?: string | null;
+  ownerName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  contactWhatsapp?: string | null;
+  businessAddress?: string | null;
+  cityRegion?: string | null;
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,14 +75,32 @@ export interface CreateDealerPagePayload {
   description?: string;
   pagePassword?: string;
   status?: DealerPageStatus;
+  businessType?: string;
+  ownerName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactWhatsapp?: string;
+  businessAddress?: string;
+  cityRegion?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
 }
 
 export interface UpdateDealerPagePayload {
-  businessName: string;
-  slug: string;
+  businessName?: string;
+  slug?: string;
   description?: string;
   pagePassword?: string;
   status?: DealerPageStatus;
+  businessType?: string;
+  ownerName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactWhatsapp?: string;
+  businessAddress?: string;
+  cityRegion?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
 }
 
 export interface ForgotPasswordPayload {

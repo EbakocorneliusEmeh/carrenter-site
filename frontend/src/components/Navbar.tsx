@@ -4,23 +4,28 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./Navbar.module.css";
 import { useAuth } from "@/hooks/useAuth";
-import { getDashboardPath, getRoleLabel } from "@/utils/roleRedirect";
-
-const authLinks = [
-  { href: "/login", label: "Login" },
-  { href: "/register", label: "Create account" },
-];
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
 
-  const dashboardHref = user ? getDashboardPath(user.role) : "/login";
+  const authLinks = [
+    { href: "/login", label: "Login" },
+    { href: "/register", label: "Create account" },
+  ];
 
   async function handleLogout() {
-    await logout();
-    router.replace("/login");
+    try {
+      await logout();
+    } catch (err) {
+      // Ensure logout errors do not produce unhandled rejections.
+      // Show a friendly warning and continue to redirect to login.
+      // eslint-disable-next-line no-console
+      console.warn("Logout failed:", err);
+    } finally {
+      router.replace("/login");
+    }
   }
 
   return (
@@ -34,16 +39,14 @@ export default function Navbar() {
           <Link className={pathname === "/" ? styles.active : ""} href="/">
             Home
           </Link>
-          <Link
-            className={pathname === "/profile" ? styles.active : ""}
-            href="/profile"
-          >
-            Profile
-          </Link>
+
           {isAuthenticated ? (
-            <>
-              <Link className={styles.dashboardLink} href={dashboardHref}>
-                {getRoleLabel(user?.role)} dashboard
+            <div className={styles.authLinks}>
+              <Link 
+                className={pathname === "/dashboard" ? styles.active : ""} 
+                href="/dashboard"
+              >
+                Dashboard
               </Link>
               <button
                 type="button"
@@ -53,7 +56,7 @@ export default function Navbar() {
               >
                 Logout
               </button>
-            </>
+            </div>
           ) : (
             <div className={styles.authLinks}>
               {authLinks.map((link) => (
