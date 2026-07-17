@@ -11,7 +11,7 @@ export default function DealerLayout({
       <aside className={styles.sidebar}>
         <div className={styles.logo}>DriveNow Dealer</div>
         <nav className={styles.nav}>
-          <Link href="/dealer/dashboard" className={styles.navLink}>
+          <Link href="/dealer/vehicles" className={styles.navLink}>
             🚗 Vehicles
           </Link>
           <Link href="/dealer/settings" className={styles.navLink}>

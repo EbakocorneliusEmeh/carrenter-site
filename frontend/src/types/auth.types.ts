@@ -47,6 +47,21 @@ export interface BecomeDealerPayload {
   businessName: string;
 }
 
+export interface UpdateProfilePayload {
+  fullName?: string;
+  phone?: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface UpdateAvatarPayload {
+  avatarUrl: string;
+}
+
 export type DealerPageStatus = "ACTIVE" | "INACTIVE" | "ARCHIVED" | "DRAFT";
 
 export interface DealerPage {

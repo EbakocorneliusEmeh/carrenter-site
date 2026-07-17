@@ -48,6 +48,12 @@ export default function Navbar() {
               >
                 Dashboard
               </Link>
+              <Link 
+                className={pathname === "/profile" ? styles.active : ""} 
+                href="/profile"
+              >
+                Profile
+              </Link>
               <button
                 type="button"
                 className={styles.logoutButton}

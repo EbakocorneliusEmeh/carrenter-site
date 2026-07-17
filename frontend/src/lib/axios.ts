@@ -57,7 +57,15 @@ api.interceptors.response.use(
     try {
       if (!refreshPromise) {
         refreshPromise = refreshClient
-          .post("/api/v1/auth/refresh", { refreshToken })
+          .post(
+            "/api/v1/auth/refresh",
+            { refreshToken },
+            {
+              headers: {
+                Authorization: `Bearer ${refreshToken}`,
+              },
+            }
+          )
           .then((response) => {
             const payload = response.data?.data ?? response.data ?? {};
             const nextTokens = normalizeTokens(payload);

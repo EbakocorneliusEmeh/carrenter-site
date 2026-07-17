@@ -43,7 +43,7 @@ export default function BusinessPage() {
         </div>
         <div className={styles.buttonGroup}>
           <Link className={styles.secondaryBtn} href="/dealer/dashboard">
-            ← Dealer dashboard
+            Dealer dashboard
           </Link>
           <Link className={styles.backLink} href="/">
             Home
