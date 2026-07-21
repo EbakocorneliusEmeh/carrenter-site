@@ -170,8 +170,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async refreshSession() {
         const session = await refreshSessionRequest();
-        if (session?.user) {
-          setUser(session.user);
+        // Always fetch the full user from DB to ensure avatarUrl and profiles are up to date
+        try {
+          const freshUser = await fetchMe();
+          if (freshUser) {
+            setUser(freshUser);
+            const currentAccess = getAccessToken();
+            const currentRefresh = getRefreshToken();
+            if (currentAccess && currentRefresh) {
+              setAuthSession(
+                { accessToken: currentAccess, refreshToken: currentRefresh },
+                freshUser
+              );
+            }
+            return { ...session, user: freshUser } as any;
+          }
+        } catch {
+          // fetchMe failed, fall back to whatever session returned
+          if (session?.user) {
+            setUser(session.user);
+          }
         }
         return session;
       },

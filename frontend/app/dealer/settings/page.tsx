@@ -3,12 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { createDealerPage, listDealerPages } from "@/services/dealer.service";
+import {
+  createDealerPage,
+  listDealerPages,
+  updateDealerPage,
+} from "@/services/dealer.service";
 import { getFriendlyError } from "@/services/auth.service";
 import type { DealerPage } from "@/types/auth.types";
 import styles from "./page.module.css";
 
-/** Converts any string into a valid slug: lowercase, alphanumeric + hyphens only */
 function toSlug(name: string) {
   return name
     .toLowerCase()
@@ -17,30 +20,73 @@ function toSlug(name: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+type FormMode = "create" | "edit";
+
+interface PageFormState {
+  businessName: string;
+  slug: string;
+  description: string;
+  businessType: string;
+  ownerName: string;
+  contactEmail: string;
+  contactPhone: string;
+  contactWhatsapp: string;
+  businessAddress: string;
+  cityRegion: string;
+  logoFile: File | null;
+  logoPreview: string;
+  bannerFile: File | null;
+  bannerPreview: string;
+  pagePassword: string;
+}
+
+const emptyForm = (): PageFormState => ({
+  businessName: "",
+  slug: "",
+  description: "",
+  businessType: "",
+  ownerName: "",
+  contactEmail: "",
+  contactPhone: "",
+  contactWhatsapp: "",
+  businessAddress: "",
+  cityRegion: "",
+  logoFile: null,
+  logoPreview: "",
+  bannerFile: null,
+  bannerPreview: "",
+  pagePassword: "",
+});
+
+function pageToForm(page: DealerPage): PageFormState {
+  return {
+    businessName: page.businessName,
+    slug: page.slug,
+    description: page.description || "",
+    businessType: page.businessType || "",
+    ownerName: page.ownerName || "",
+    contactEmail: page.contactEmail || "",
+    contactPhone: page.contactPhone || "",
+    contactWhatsapp: page.contactWhatsapp || "",
+    businessAddress: page.businessAddress || "",
+    cityRegion: page.cityRegion || "",
+    logoFile: null,
+    logoPreview: page.logoUrl || "",
+    bannerFile: null,
+    bannerPreview: page.bannerUrl || "",
+    pagePassword: "",
+  };
+}
+
 export default function DealerSettings() {
   const { user } = useAuth();
   const [pages, setPages] = useState<DealerPage[]>([]);
   const [isLoadingPages, setIsLoadingPages] = useState(true);
   const formRef = useRef<HTMLFormElement | null>(null);
-  const [showForm, setShowForm] = useState(false);
 
-  // Required fields
-  const initialName = user?.businessName || "";
-  const [businessName, setBusinessName] = useState(initialName);
-  const [slug, setSlug] = useState(toSlug(initialName));
-
-  // Optional fields
-  const [description, setDescription] = useState("");
-  const [businessType, setBusinessType] = useState("");
-  const [ownerName, setOwnerName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [contactWhatsapp, setContactWhatsapp] = useState("");
-  const [businessAddress, setBusinessAddress] = useState("");
-  const [cityRegion, setCityRegion] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("");
-  const [pagePassword, setPagePassword] = useState("");
+  const [formMode, setFormMode] = useState<FormMode | null>(null);
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [form, setForm] = useState<PageFormState>(emptyForm());
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,11 +96,13 @@ export default function DealerSettings() {
     fetchPages();
   }, []);
 
-  // Sync fields if user loads after initial render
   useEffect(() => {
-    if (user?.businessName && !businessName) {
-      setBusinessName(user.businessName);
-      setSlug(toSlug(user.businessName));
+    if (user?.businessName && formMode === "create" && !form.businessName) {
+      setForm((f) => ({
+        ...f,
+        businessName: user.businessName!,
+        slug: toSlug(user.businessName!),
+      }));
     }
   }, [user]);
 
@@ -70,52 +118,100 @@ export default function DealerSettings() {
     }
   };
 
+  const openCreateForm = () => {
+    setFormMode("create");
+    setEditingPageId(null);
+    setForm({
+      ...emptyForm(),
+      businessName: user?.businessName || "",
+      slug: toSlug(user?.businessName || ""),
+    });
+    setError(null);
+    setSuccess(null);
+    setTimeout(
+      () => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      100
+    );
+  };
+
+  const openEditForm = (page: DealerPage) => {
+    setFormMode("edit");
+    setEditingPageId(page.id);
+    setForm(pageToForm(page));
+    setError(null);
+    setSuccess(null);
+    setTimeout(
+      () => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      100
+    );
+  };
+
+  const closeForm = () => {
+    setFormMode(null);
+    setEditingPageId(null);
+    setForm(emptyForm());
+    setError(null);
+  };
+
+  const setField = (key: keyof PageFormState, value: any) =>
+    setForm((f) => ({ ...f, [key]: value }));
+
+  const handleLogoFile = (file: File) => {
+    setField("logoFile", file);
+    setField("logoPreview", URL.createObjectURL(file));
+  };
+
+  const handleBannerFile = (file: File) => {
+    setField("bannerFile", file);
+    setField("bannerPreview", URL.createObjectURL(file));
+  };
+
   const handleSlugGeneration = (name: string) => {
-    setBusinessName(name);
-    setSlug(toSlug(name));
+    setField("businessName", name);
+    // Only auto-generate slug when creating; in edit mode the dealer can keep their slug
+    if (formMode === "create") setField("slug", toSlug(name));
+  };
+
+  const buildFormData = (): FormData => {
+    const fd = new FormData();
+    fd.append("businessName", form.businessName);
+    fd.append("slug", form.slug);
+    if (form.description) fd.append("description", form.description);
+    if (form.businessType) fd.append("businessType", form.businessType);
+    if (form.ownerName) fd.append("ownerName", form.ownerName);
+    if (form.contactEmail) fd.append("contactEmail", form.contactEmail);
+    if (form.contactPhone) fd.append("contactPhone", form.contactPhone);
+    if (form.contactWhatsapp) fd.append("contactWhatsapp", form.contactWhatsapp);
+    if (form.businessAddress) fd.append("businessAddress", form.businessAddress);
+    if (form.cityRegion) fd.append("cityRegion", form.cityRegion);
+    if (form.pagePassword) fd.append("pagePassword", form.pagePassword);
+    if (form.logoFile) fd.append("logo", form.logoFile);
+    if (form.bannerFile) fd.append("banner", form.bannerFile);
+    return fd;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessName || !slug) return;
+    if (!form.businessName || !form.slug) return;
 
     try {
       setIsSubmitting(true);
       setError(null);
       setSuccess(null);
 
-      const newPage = await createDealerPage({
-        businessName,
-        slug,
-        description: description || undefined,
-        businessType: businessType || undefined,
-        ownerName: ownerName || undefined,
-        contactEmail: contactEmail || undefined,
-        contactPhone: contactPhone || undefined,
-        contactWhatsapp: contactWhatsapp || undefined,
-        businessAddress: businessAddress || undefined,
-        cityRegion: cityRegion || undefined,
-        logoUrl: logoUrl || undefined,
-        bannerUrl: bannerUrl || undefined,
-        pagePassword: pagePassword || undefined,
-      });
+      if (formMode === "create") {
+        const newPage = await createDealerPage(buildFormData());
+        setPages((prev) => [newPage, ...prev]);
+        setSuccess(`"${newPage.businessName}" page created successfully!`);
+      } else if (formMode === "edit" && editingPageId) {
+        const updated = await updateDealerPage(editingPageId, buildFormData());
+        setPages((prev) =>
+          prev.map((p) => (p.id === editingPageId ? updated : p))
+        );
+        setSuccess(`"${updated.businessName}" page updated successfully!`);
+      }
 
-      setPages((prev) => [newPage, ...prev]);
-      setSuccess(`"${newPage.businessName}" page created successfully!`);
-      setShowForm(false);
-
-      // Reset optional fields
-      setDescription("");
-      setBusinessType("");
-      setOwnerName("");
-      setContactEmail("");
-      setContactPhone("");
-      setContactWhatsapp("");
-      setBusinessAddress("");
-      setCityRegion("");
-      setLogoUrl("");
-      setBannerUrl("");
-      setPagePassword("");
+      closeForm();
     } catch (err: any) {
       const raw = getFriendlyError(err);
       setError(Array.isArray(raw) ? raw.join(" | ") : raw);
@@ -130,31 +226,19 @@ export default function DealerSettings() {
         <div>
           <h1 className={styles.title}>Settings</h1>
           <p className={styles.subtitle}>
-            Manage your business pages and profile information.
+            Manage your business pages, profile, logo and banner.
           </p>
         </div>
         <button
           type="button"
           className={styles.primaryBtn}
-          onClick={() => {
-            setShowForm((v) => !v);
-            setError(null);
-            setSuccess(null);
-            setTimeout(
-              () =>
-                formRef.current?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                }),
-              100
-            );
-          }}
+          onClick={formMode === "create" ? closeForm : openCreateForm}
         >
-          {showForm ? "✕ Cancel" : "+ Create New Page"}
+          {formMode === "create" ? "✕ Cancel" : "+ Create New Page"}
         </button>
       </header>
 
-      {success && <div className={styles.successBanner}>{success}</div>}
+      {success && <div className={styles.successBanner}>✓ {success}</div>}
 
       {/* ── Pages List ─────────────────────────────── */}
       <section className={styles.section}>
@@ -165,13 +249,26 @@ export default function DealerSettings() {
         ) : pages.length > 0 ? (
           <div className={styles.pagesGrid}>
             {pages.map((page) => (
-              <div key={page.id} className={styles.pageCard}>
-                {page.bannerUrl && (
-                  <div
-                    className={styles.cardBanner}
-                    style={{ backgroundImage: `url(${page.bannerUrl})` }}
-                  />
-                )}
+              <div
+                key={page.id}
+                className={`${styles.pageCard} ${editingPageId === page.id ? styles.pageCardActive : ""}`}
+              >
+                <div
+                  className={styles.cardBanner}
+                  style={
+                    page.bannerUrl
+                      ? { backgroundImage: `url(${page.bannerUrl})` }
+                      : undefined
+                  }
+                >
+                  {page.logoUrl && (
+                    <img
+                      src={page.logoUrl}
+                      alt={`${page.businessName} logo`}
+                      className={styles.cardLogo}
+                    />
+                  )}
+                </div>
                 <div className={styles.cardBody}>
                   <h3 className={styles.pageName}>{page.businessName}</h3>
                   <div className={styles.pageSlug}>/{page.slug}</div>
@@ -187,12 +284,26 @@ export default function DealerSettings() {
                     >
                       {page.status}
                     </span>
-                    <Link
-                      href={`/business/${page.slug}`}
-                      className={styles.viewLink}
-                    >
-                      View Page →
-                    </Link>
+                    <div className={styles.cardActions}>
+                      <button
+                        type="button"
+                        className={styles.editBtn}
+                        onClick={() =>
+                          editingPageId === page.id
+                            ? closeForm()
+                            : openEditForm(page)
+                        }
+                      >
+                        {editingPageId === page.id ? "✕ Cancel" : "✏ Edit"}
+                      </button>
+                      <Link
+                        href={`/business/${page.slug}`}
+                        target="_blank"
+                        className={styles.viewLink}
+                      >
+                        View Page →
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -205,7 +316,7 @@ export default function DealerSettings() {
             <button
               type="button"
               className={styles.primaryBtn}
-              onClick={() => setShowForm(true)}
+              onClick={openCreateForm}
             >
               Create your first page
             </button>
@@ -213,13 +324,17 @@ export default function DealerSettings() {
         )}
       </section>
 
-      {/* ── Create New Page Form ────────────────────── */}
-      {showForm && (
+      {/* ── Create / Edit Form ───────────────────── */}
+      {formMode && (
         <section className={styles.section}>
-          <form ref={formRef} onSubmit={handleSubmit} className={styles.createForm}>
-            <h2 className={styles.formTitle}>Create New Business Page</h2>
+          <form ref={formRef} onSubmit={handleSubmit} className={`${styles.createForm} ${formMode === "edit" ? styles.editForm : ""}`}>
+            <h2 className={styles.formTitle}>
+              {formMode === "create" ? "Create New Business Page" : "Edit Business Page"}
+            </h2>
             <p className={styles.formSubtitle}>
-              Fill in the details below. Only Business Name and URL Slug are required.
+              {formMode === "create"
+                ? "Fill in the details below. Only Business Name and URL Slug are required."
+                : "Update your page details below. Changes will be visible to visitors immediately after saving."}
             </p>
 
             {/* Row 1: Name + Slug */}
@@ -230,7 +345,7 @@ export default function DealerSettings() {
                   id="businessName"
                   type="text"
                   className={styles.input}
-                  value={businessName}
+                  value={form.businessName}
                   onChange={(e) => handleSlugGeneration(e.target.value)}
                   placeholder="e.g. Premium Auto Rentals"
                   required
@@ -242,18 +357,20 @@ export default function DealerSettings() {
                   id="slug"
                   type="text"
                   className={styles.input}
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                  value={form.slug}
+                  onChange={(e) =>
+                    setField("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
+                  }
                   placeholder="premium-auto-rentals"
                   required
                 />
                 <span className={styles.fieldHint}>
-                  Your page URL: /business/<strong>{slug || "your-slug"}</strong>
+                  Your page URL: /business/<strong>{form.slug || "your-slug"}</strong>
                 </span>
               </div>
             </div>
 
-            {/* Row 2: Business Type + Owner Name */}
+            {/* Row 2: Business Type + Owner */}
             <div className={styles.formRow}>
               <div className={styles.inputGroup}>
                 <label htmlFor="businessType">Business Type</label>
@@ -261,8 +378,8 @@ export default function DealerSettings() {
                   id="businessType"
                   type="text"
                   className={styles.input}
-                  value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value)}
+                  value={form.businessType}
+                  onChange={(e) => setField("businessType", e.target.value)}
                   placeholder="e.g. Car Rental, Leasing"
                 />
               </div>
@@ -272,14 +389,14 @@ export default function DealerSettings() {
                   id="ownerName"
                   type="text"
                   className={styles.input}
-                  value={ownerName}
-                  onChange={(e) => setOwnerName(e.target.value)}
+                  value={form.ownerName}
+                  onChange={(e) => setField("ownerName", e.target.value)}
                   placeholder="Full name of the owner"
                 />
               </div>
             </div>
 
-            {/* Row 3: Contact Email + Phone */}
+            {/* Row 3: Email + Phone */}
             <div className={styles.formRow}>
               <div className={styles.inputGroup}>
                 <label htmlFor="contactEmail">Contact Email</label>
@@ -287,8 +404,8 @@ export default function DealerSettings() {
                   id="contactEmail"
                   type="email"
                   className={styles.input}
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
+                  value={form.contactEmail}
+                  onChange={(e) => setField("contactEmail", e.target.value)}
                   placeholder="contact@yourbusiness.com"
                 />
               </div>
@@ -298,14 +415,14 @@ export default function DealerSettings() {
                   id="contactPhone"
                   type="tel"
                   className={styles.input}
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
+                  value={form.contactPhone}
+                  onChange={(e) => setField("contactPhone", e.target.value)}
                   placeholder="+1 234 567 8900"
                 />
               </div>
             </div>
 
-            {/* Row 4: WhatsApp + City/Region */}
+            {/* Row 4: WhatsApp + City */}
             <div className={styles.formRow}>
               <div className={styles.inputGroup}>
                 <label htmlFor="contactWhatsapp">WhatsApp Number</label>
@@ -313,8 +430,8 @@ export default function DealerSettings() {
                   id="contactWhatsapp"
                   type="tel"
                   className={styles.input}
-                  value={contactWhatsapp}
-                  onChange={(e) => setContactWhatsapp(e.target.value)}
+                  value={form.contactWhatsapp}
+                  onChange={(e) => setField("contactWhatsapp", e.target.value)}
                   placeholder="+1 234 567 8900"
                 />
               </div>
@@ -324,48 +441,98 @@ export default function DealerSettings() {
                   id="cityRegion"
                   type="text"
                   className={styles.input}
-                  value={cityRegion}
-                  onChange={(e) => setCityRegion(e.target.value)}
+                  value={form.cityRegion}
+                  onChange={(e) => setField("cityRegion", e.target.value)}
                   placeholder="e.g. Lagos, Abuja"
                 />
               </div>
             </div>
 
-            {/* Row 5: Address (full width) */}
+            {/* Address */}
             <div className={styles.inputGroup}>
               <label htmlFor="businessAddress">Business Address</label>
               <input
                 id="businessAddress"
                 type="text"
                 className={styles.input}
-                value={businessAddress}
-                onChange={(e) => setBusinessAddress(e.target.value)}
+                value={form.businessAddress}
+                onChange={(e) => setField("businessAddress", e.target.value)}
                 placeholder="Street address"
               />
             </div>
 
-            {/* Row 6: Logo URL + Banner URL */}
+            {/* Logo + Banner Upload */}
             <div className={styles.formRow}>
               <div className={styles.inputGroup}>
-                <label htmlFor="logoUrl">Logo URL</label>
+                <label>Profile Logo</label>
+                <div
+                  className={styles.fileUploadZone}
+                  onClick={() => document.getElementById("logoInput")?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files?.[0]) handleLogoFile(e.dataTransfer.files[0]);
+                  }}
+                  onPaste={(e) => {
+                    const file = e.clipboardData.files?.[0];
+                    if (file) handleLogoFile(file);
+                  }}
+                  tabIndex={0}
+                >
+                  {form.logoPreview ? (
+                    <img
+                      src={form.logoPreview}
+                      alt="Logo preview"
+                      className={styles.previewImage}
+                    />
+                  ) : (
+                    <p>Click, paste, or drop logo</p>
+                  )}
+                </div>
                 <input
-                  id="logoUrl"
-                  type="url"
-                  className={styles.input}
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://..."
+                  id="logoInput"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) handleLogoFile(e.target.files[0]);
+                  }}
                 />
               </div>
+
               <div className={styles.inputGroup}>
-                <label htmlFor="bannerUrl">Banner URL</label>
+                <label>Profile Banner</label>
+                <div
+                  className={styles.fileUploadZone}
+                  onClick={() => document.getElementById("bannerInput")?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files?.[0]) handleBannerFile(e.dataTransfer.files[0]);
+                  }}
+                  onPaste={(e) => {
+                    const file = e.clipboardData.files?.[0];
+                    if (file) handleBannerFile(file);
+                  }}
+                  tabIndex={0}
+                >
+                  {form.bannerPreview ? (
+                    <div
+                      className={styles.previewBanner}
+                      style={{ backgroundImage: `url(${form.bannerPreview})` }}
+                    />
+                  ) : (
+                    <p>Click, paste, or drop banner image</p>
+                  )}
+                </div>
                 <input
-                  id="bannerUrl"
-                  type="url"
-                  className={styles.input}
-                  value={bannerUrl}
-                  onChange={(e) => setBannerUrl(e.target.value)}
-                  placeholder="https://..."
+                  id="bannerInput"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) handleBannerFile(e.target.files[0]);
+                  }}
                 />
               </div>
             </div>
@@ -376,8 +543,8 @@ export default function DealerSettings() {
               <textarea
                 id="description"
                 className={styles.input}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={form.description}
+                onChange={(e) => setField("description", e.target.value)}
                 placeholder="Tell customers about your business…"
                 rows={3}
               />
@@ -385,13 +552,17 @@ export default function DealerSettings() {
 
             {/* Page Password */}
             <div className={styles.inputGroup}>
-              <label htmlFor="pagePassword">Page Password (Optional)</label>
+              <label htmlFor="pagePassword">
+                {formMode === "edit"
+                  ? "Change Page Password (leave blank to keep existing)"
+                  : "Page Password (Optional)"}
+              </label>
               <input
                 id="pagePassword"
                 type="password"
                 className={styles.input}
-                value={pagePassword}
-                onChange={(e) => setPagePassword(e.target.value)}
+                value={form.pagePassword}
+                onChange={(e) => setField("pagePassword", e.target.value)}
                 placeholder="Leave blank for a public page"
               />
             </div>
@@ -402,16 +573,22 @@ export default function DealerSettings() {
               <button
                 type="button"
                 className={styles.cancelBtn}
-                onClick={() => setShowForm(false)}
+                onClick={closeForm}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className={styles.submitBtn}
-                disabled={isSubmitting || !businessName || !slug}
+                disabled={isSubmitting || !form.businessName || !form.slug}
               >
-                {isSubmitting ? "Creating…" : "Create Business Page"}
+                {isSubmitting
+                  ? formMode === "create"
+                    ? "Creating…"
+                    : "Saving…"
+                  : formMode === "create"
+                  ? "Create Business Page"
+                  : "Save Changes"}
               </button>
             </div>
           </form>

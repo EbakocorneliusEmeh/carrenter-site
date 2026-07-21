@@ -1,3 +1,5 @@
+import type { Vehicle } from "./vehicle.types";
+
 export type UserRole = "customer" | "dealer" | "admin";
 
 export interface AuthUser {
@@ -82,6 +84,10 @@ export interface DealerPage {
   bannerUrl?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PublicDealerPage extends DealerPage {
+  vehicles?: Vehicle[];
 }
 
 export interface CreateDealerPagePayload {

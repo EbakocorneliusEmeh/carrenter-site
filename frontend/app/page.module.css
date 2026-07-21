@@ -21,7 +21,7 @@
   right: -2rem;
   width: 14rem;
   height: 14rem;
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(34, 197, 94, 0.14);
 }
 
 .page::after {
@@ -29,7 +29,7 @@
   left: -3rem;
   width: 18rem;
   height: 18rem;
-  background: rgba(167, 139, 250, 0.12);
+  background: rgba(132, 204, 22, 0.12);
 }
 
 .hero {
@@ -52,8 +52,8 @@
   padding: clamp(1.5rem, 3vw, 3rem);
   border-radius: var(--radius-xl);
   background:
-    linear-gradient(135deg, rgba(56, 189, 248, 0.08), transparent 30%),
-    linear-gradient(225deg, rgba(167, 139, 250, 0.07), transparent 32%),
+    linear-gradient(135deg, rgba(34, 197, 94, 0.08), transparent 30%),
+    linear-gradient(225deg, rgba(132, 204, 22, 0.07), transparent 32%),
     var(--surface);
 }
 
@@ -102,13 +102,14 @@
 }
 
 .primaryButton {
-  background: linear-gradient(135deg, var(--primary-strong), var(--accent));
-  color: #06101d;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #ffffff;
 }
 
 .secondaryButton {
-  border: 1px solid var(--surface-border);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary-strong);
 }
 
 .heroCard {
@@ -117,7 +118,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-left: 3px solid rgba(56, 189, 248, 0.4);
+  border-left: 3px solid rgba(34, 197, 94, 0.4);
 }
 
 .heroList {
@@ -144,7 +145,7 @@
 
 .featureCard:hover {
   transform: translateY(-4px);
-  border-color: rgba(125, 211, 252, 0.28);
+  border-color: rgba(34, 197, 94, 0.28);
 }
 
 .featureCard h2 {
@@ -160,7 +161,8 @@
 
 @media (max-width: 980px) {
   .hero,
-  .featureGrid {
+  .featureGrid,
+  .stepsGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -173,4 +175,54 @@
   .copy h1 {
     max-width: none;
   }
+}
+
+.howItWorks {
+  margin-top: 4rem;
+  text-align: center;
+}
+
+.howItWorks h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: var(--text);
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+.stepCard {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--primary);
+  font-weight: 700;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.stepCard h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.stepCard p {
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.6;
 }

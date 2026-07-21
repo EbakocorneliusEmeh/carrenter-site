@@ -15,7 +15,7 @@ import styles from "./ProfileSettings.module.css";
 type TabType = "profile" | "password";
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
+  const { user, refreshSession } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<TabType>("profile");
 
@@ -64,20 +64,25 @@ export default function ProfileSettings() {
       setIsUploadingAvatar(true);
       setAvatarError(null);
 
-      // Show preview
+      // Show local preview immediately
       const reader = new FileReader();
       reader.onload = (event) => {
         setAvatarPreview(event.target?.result as string);
       };
       reader.readAsDataURL(file);
 
-      // Upload file
+      // Upload to backend
       await uploadAvatar(file);
+
+      // Refresh the auth context so user.avatarUrl is updated from DB
+      await refreshSession();
+
       setProfileSuccess("Profile picture updated successfully!");
       setTimeout(() => setProfileSuccess(null), 3000);
     } catch (error) {
       const errorMsg = getFriendlyError(error);
       setAvatarError(errorMsg);
+      setAvatarPreview(null);
     } finally {
       setIsUploadingAvatar(false);
       if (fileInputRef.current) {
@@ -91,23 +96,39 @@ export default function ProfileSettings() {
     setProfileError(null);
     setProfileSuccess(null);
 
-    if (!fullName.trim()) {
-      setProfileError("Full name is required");
+    if (fullName.trim() === "" && fullName !== user?.fullName) {
+      setProfileError("Full name cannot be empty");
       return;
     }
 
-    if (!phone.trim()) {
-      setProfileError("Phone number is required");
+    if (phone.trim() === "" && phone !== user?.phone) {
+      setProfileError("Phone number cannot be empty");
       return;
     }
 
     try {
       setIsSubmittingProfile(true);
-      const payload: UpdateProfilePayload = {
-        fullName: fullName.trim(),
-        phone: phone.trim(),
-      };
+      const payload: Partial<UpdateProfilePayload> = {};
+      
+      if (fullName.trim() !== user?.fullName) {
+        payload.fullName = fullName.trim();
+      }
+      
+      if (phone.trim() !== user?.phone) {
+        payload.phone = phone.trim();
+      }
+
+      if (Object.keys(payload).length === 0) {
+        setProfileSuccess("No changes to save.");
+        setTimeout(() => setProfileSuccess(null), 3000);
+        return;
+      }
+
       await updateProfile(payload);
+
+      // Refresh context so name/phone update in the header too
+      await refreshSession();
+
       setProfileSuccess("Profile updated successfully!");
       setTimeout(() => setProfileSuccess(null), 3000);
     } catch (error) {

@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { becomeDealer, getFriendlyError } from "@/services/auth.service";
 import styles from "./page.module.css";
@@ -54,14 +55,26 @@ function CustomerDashboardInner() {
     <div className={styles.dashboardContainer}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <div className={styles.avatar}>
-            {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+          <div className={styles.avatarWrapper}>
+            {user?.avatarUrl ? (
+              <Image
+                src={user.avatarUrl}
+                alt={user.fullName || "Profile"}
+                width={52}
+                height={52}
+                className={styles.avatarImg}
+              />
+            ) : (
+              <div className={styles.avatar}>
+                {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+            )}
           </div>
           <div>
             <h1 className={styles.welcomeText}>
               Welcome back, <span>{user?.fullName || "Guest"}</span>
             </h1>
-            <p className={styles.welcomeSub}>{user?.email}</p>
+            <p className={styles.welcomeSub}>{user?.phone || user?.email}</p>
           </div>
         </div>
         <div className={styles.roleBadge}>Customer</div>

@@ -3,24 +3,23 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getDealerPageBySlug } from "@/services/dealer.service";
-import type { DealerPage } from "@/types/auth.types";
+import { getPublicDealerPageBySlug } from "@/services/dealer.service";
+import type { PublicDealerPage } from "@/types/auth.types";
 import styles from "./page.module.css";
 
 export default function BusinessPage() {
   const params = useParams();
   const slug = typeof params?.slug === "string" ? params.slug : "";
-  const [page, setPage] = useState<DealerPage | null>(null);
+  const [page, setPage] = useState<PublicDealerPage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
-
     setIsLoading(true);
     setError(null);
-    getDealerPageBySlug(slug)
-      .then((pageData) => setPage(pageData))
+    getPublicDealerPageBySlug(slug)
+      .then(setPage)
       .catch((err: any) => {
         console.error("Failed to load business page:", err);
         setError(err?.message || "Unable to load the business page.");
@@ -28,106 +27,294 @@ export default function BusinessPage() {
       .finally(() => setIsLoading(false));
   }, [slug]);
 
+  if (isLoading) {
+    return (
+      <div className={styles.loadingScreen}>
+        <div className={styles.spinner} />
+        <p>Loading business page…</p>
+      </div>
+    );
+  }
+
+  if (error || !page) {
+    return (
+      <div className={styles.errorScreen}>
+        <div className={styles.errorIcon}>🏢</div>
+        <h1>Page Not Found</h1>
+        <p>{error || "This business page doesn't exist or is currently inactive."}</p>
+        <Link href="/" className={styles.backBtn}>← Back to Home</Link>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.pageContainer}>
-      <div className={styles.pageHeader}>
-        <div>
-          <h1>{page?.businessName ?? "Dealer Business Page"}</h1>
-          <p className={styles.subtitle}>
-            {page ? (
-              <>Business page for <strong>{page.businessName}</strong></>
+    <div className={styles.pageWrapper}>
+
+      {/* ── HERO BANNER ─────────────────────────────── */}
+      <div
+        className={styles.heroBanner}
+        style={
+          page.bannerUrl
+            ? { backgroundImage: `url(${page.bannerUrl})` }
+            : undefined
+        }
+      >
+        <div className={styles.heroBannerOverlay} />
+        <Link href="/" className={styles.homeLink}>← Back to Home</Link>
+      </div>
+
+      {/* ── PROFILE HEADER ──────────────────────────── */}
+      <div className={styles.profileHeader}>
+        <div className={styles.profileHeaderInner}>
+          <div className={styles.logoWrapper}>
+            {page.logoUrl ? (
+              <img
+                src={page.logoUrl}
+                alt={`${page.businessName} logo`}
+                className={styles.logo}
+              />
             ) : (
-              <>Viewing business page <strong>{slug}</strong></>
+              <div className={styles.logoPlaceholder}>
+                {page.businessName.charAt(0).toUpperCase()}
+              </div>
             )}
-          </p>
-        </div>
-        <div className={styles.buttonGroup}>
-          <Link className={styles.secondaryBtn} href="/dealer/dashboard">
-            Dealer dashboard
-          </Link>
-          <Link className={styles.backLink} href="/">
-            Home
-          </Link>
+          </div>
+
+          <div className={styles.profileMeta}>
+            <h1 className={styles.businessName}>{page.businessName}</h1>
+            <div className={styles.metaRow}>
+              {page.businessType && (
+                <span className={styles.typeBadge}>{page.businessType}</span>
+              )}
+              {page.cityRegion && (
+                <span className={styles.locationBadge}>
+                  📍 {page.cityRegion}
+                </span>
+              )}
+              <span className={styles.slugText}>/{page.slug}</span>
+            </div>
+          </div>
+
+          {/* Contact quick-actions */}
+          <div className={styles.quickContact}>
+            {page.contactPhone && (
+              <a href={`tel:${page.contactPhone}`} className={styles.contactChip}>
+                📞 Call
+              </a>
+            )}
+            {page.contactWhatsapp && (
+              <a
+                href={`https://wa.me/${page.contactWhatsapp.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${styles.contactChip} ${styles.contactChipGreen}`}
+              >
+                💬 WhatsApp
+              </a>
+            )}
+            {page.contactEmail && (
+              <a href={`mailto:${page.contactEmail}`} className={styles.contactChip}>
+                ✉ Email
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className={styles.messageBox}>Loading business page…</div>
-      ) : error ? (
-        <div className={styles.errorBox}>{error}</div>
-      ) : !page ? (
-        <div className={styles.messageBox}>Business page not found.</div>
-      ) : (
-        <article className={styles.businessCard}>
-          {page.bannerUrl && (
-            <div
-              className={styles.banner}
-              style={{ backgroundImage: `url(${page.bannerUrl})` }}
-            />
-          )}
-          <div className={styles.cardContent}>
-            <div className={styles.headline}>
-              {page.logoUrl && (
-                <img
-                  src={page.logoUrl}
-                  alt={`${page.businessName} logo`}
-                  className={styles.logo}
-                />
-              )}
-              <div>
-                <h2>{page.businessName}</h2>
-                <div className={styles.pageSlug}>/{page.slug}</div>
-                {page.businessType && (
-                  <span className={styles.category}>{page.businessType}</span>
-                )}
-              </div>
+      {/* ── MAIN CONTENT ────────────────────────────── */}
+      <div className={styles.mainContent}>
+
+        {/* About + Contact grid */}
+        <div className={styles.infoGrid}>
+
+          {/* About card */}
+          {page.description && (
+            <div className={styles.infoCard}>
+              <h2 className={styles.cardTitle}>About</h2>
+              <p className={styles.aboutText}>{page.description}</p>
             </div>
+          )}
 
-            {page.description && (
-              <p className={styles.description}>{page.description}</p>
-            )}
-
-            <div className={styles.detailsGrid}>
+          {/* Contact details card */}
+          <div className={styles.infoCard}>
+            <h2 className={styles.cardTitle}>Contact & Location</h2>
+            <ul className={styles.contactList}>
               {page.ownerName && (
-                <div>
-                  <strong>Owner</strong>
-                  <p>{page.ownerName}</p>
-                </div>
+                <li className={styles.contactItem}>
+                  <span className={styles.contactIcon}>👤</span>
+                  <div>
+                    <div className={styles.contactLabel}>Owner</div>
+                    <div className={styles.contactValue}>{page.ownerName}</div>
+                  </div>
+                </li>
               )}
               {page.contactEmail && (
-                <div>
-                  <strong>Email</strong>
-                  <p>{page.contactEmail}</p>
-                </div>
+                <li className={styles.contactItem}>
+                  <span className={styles.contactIcon}>✉️</span>
+                  <div>
+                    <div className={styles.contactLabel}>Email</div>
+                    <a href={`mailto:${page.contactEmail}`} className={styles.contactValue}>
+                      {page.contactEmail}
+                    </a>
+                  </div>
+                </li>
               )}
               {page.contactPhone && (
-                <div>
-                  <strong>Phone</strong>
-                  <p>{page.contactPhone}</p>
-                </div>
+                <li className={styles.contactItem}>
+                  <span className={styles.contactIcon}>📞</span>
+                  <div>
+                    <div className={styles.contactLabel}>Phone</div>
+                    <a href={`tel:${page.contactPhone}`} className={styles.contactValue}>
+                      {page.contactPhone}
+                    </a>
+                  </div>
+                </li>
               )}
               {page.contactWhatsapp && (
-                <div>
-                  <strong>WhatsApp</strong>
-                  <p>{page.contactWhatsapp}</p>
-                </div>
+                <li className={styles.contactItem}>
+                  <span className={styles.contactIcon}>💬</span>
+                  <div>
+                    <div className={styles.contactLabel}>WhatsApp</div>
+                    <a
+                      href={`https://wa.me/${page.contactWhatsapp.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.contactValue}
+                    >
+                      {page.contactWhatsapp}
+                    </a>
+                  </div>
+                </li>
               )}
               {page.businessAddress && (
-                <div>
-                  <strong>Address</strong>
-                  <p>{page.businessAddress}</p>
-                </div>
+                <li className={styles.contactItem}>
+                  <span className={styles.contactIcon}>🏠</span>
+                  <div>
+                    <div className={styles.contactLabel}>Address</div>
+                    <div className={styles.contactValue}>{page.businessAddress}</div>
+                  </div>
+                </li>
               )}
               {page.cityRegion && (
-                <div>
-                  <strong>City / Region</strong>
-                  <p>{page.cityRegion}</p>
-                </div>
+                <li className={styles.contactItem}>
+                  <span className={styles.contactIcon}>📍</span>
+                  <div>
+                    <div className={styles.contactLabel}>City / Region</div>
+                    <div className={styles.contactValue}>{page.cityRegion}</div>
+                  </div>
+                </li>
               )}
-            </div>
+            </ul>
           </div>
-        </article>
-      )}
+        </div>
+
+        {/* ── VEHICLE INVENTORY ────────────────────── */}
+        <section className={styles.inventorySection}>
+          <div className={styles.inventoryHeader}>
+            <h2 className={styles.inventoryTitle}>Available Vehicles</h2>
+            <span className={styles.vehicleCount}>
+              {page.vehicles?.length || 0} listing{(page.vehicles?.length || 0) !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {!page.vehicles || page.vehicles.length === 0 ? (
+            <div className={styles.emptyInventory}>
+              <div className={styles.emptyIcon}>🚗</div>
+              <p>No vehicles available right now. Check back soon!</p>
+            </div>
+          ) : (
+            <div className={styles.vehicleGrid}>
+              {page.vehicles.map((vehicle) => (
+                <div key={vehicle.id} className={styles.vehicleCard}>
+                  <div
+                    className={styles.vehicleImage}
+                    style={{
+                      backgroundImage: `url(${
+                        vehicle.images && vehicle.images.length > 0
+                          ? vehicle.images[0].url
+                          : "/placeholder-car.png"
+                      })`,
+                    }}
+                  >
+                    <span className={styles.listingBadge}>
+                      {vehicle.listingType === "RENT"
+                        ? "For Rent"
+                        : vehicle.listingType === "SALE"
+                        ? "For Sale"
+                        : "Rent & Sale"}
+                    </span>
+                  </div>
+
+                  <div className={styles.vehicleBody}>
+                    <h3 className={styles.vehicleTitle}>
+                      {vehicle.year} {vehicle.brand} {vehicle.model}
+                    </h3>
+
+                    <div className={styles.vehicleMeta}>
+                      <span>{vehicle.transmission}</span>
+                      <span className={styles.dot}>•</span>
+                      <span>{vehicle.fuelType}</span>
+                    </div>
+
+                    <div className={styles.priceRow}>
+                      {(vehicle.listingType === "RENT" || vehicle.listingType === "BOTH") &&
+                        vehicle.dailyRentalPrice && (
+                          <div className={styles.priceTag}>
+                            <span className={styles.priceLabel}>Rent</span>
+                            <span className={styles.priceValue}>
+                              ${vehicle.dailyRentalPrice}
+                              <small>/day</small>
+                            </span>
+                          </div>
+                        )}
+                      {(vehicle.listingType === "SALE" || vehicle.listingType === "BOTH") &&
+                        vehicle.salePrice && (
+                          <div className={styles.priceTag}>
+                            <span className={styles.priceLabel}>Buy</span>
+                            <span className={styles.priceValue}>
+                              ${vehicle.salePrice.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                    </div>
+
+                    <div className={styles.vehicleActions}>
+                      {page.contactPhone && (
+                        <a
+                          href={`tel:${page.contactPhone}`}
+                          className={styles.inquireBtn}
+                        >
+                          📞 Call Dealer
+                        </a>
+                      )}
+                      {page.contactWhatsapp && (
+                        <a
+                          href={`https://wa.me/${page.contactWhatsapp.replace(/\D/g, "")}?text=Hi, I'm interested in the ${vehicle.year} ${vehicle.brand} ${vehicle.model}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`${styles.inquireBtn} ${styles.whatsappBtn}`}
+                        >
+                          💬 WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* ── FOOTER ──────────────────────────────────── */}
+      <footer className={styles.pageFooter}>
+        <p>
+          Powered by{" "}
+          <Link href="/" className={styles.footerLink}>
+            CarRenter
+          </Link>
+        </p>
+      </footer>
     </div>
   );
 }

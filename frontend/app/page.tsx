@@ -24,34 +24,51 @@ export default function HomePage() {
     <section className={styles.page}>
       <div className={styles.hero}>
         <div className={styles.copy}>
-          <p className={styles.kicker}>CarRent — Simple car rentals</p>
-          <h1>Rent cars, manage listings, and run a small dealership.</h1>
+          <p className={styles.kicker}>CarRent — Your Journey Starts Here</p>
+          <h1>Drive away in your dream car today.</h1>
           <p className={styles.description}>
-            CarRent is a focused frontend for a car rental platform. Visitors
-            can create a customer account, sign in, and land on a role-based
-            dashboard. Dealers create a separate business account (not via the
-            regular sign-up) to manage listings and sales from their business
-            dashboard.
+            Experience the easiest way to rent a car. Whether you are looking for a weekend getaway or a long-term rental, CarRent connects you with top dealers and the best vehicles. Business owners can also join to list and manage their own fleets effortlessly.
           </p>
 
           <div className={styles.actions}>
             <Link className={styles.primaryButton} href="/register">
-              Create account
+              Get Started
             </Link>
             <Link className={styles.secondaryButton} href="/login">
-              Login
+              Login to Account
             </Link>
           </div>
         </div>
 
         <div className={styles.heroCard}>
-          <p className={styles.heroLabel}>What you'll find</p>
+          <p className={styles.heroLabel}>Why Choose CarRent</p>
           <ul className={styles.heroList}>
-            <li>Customer booking and trip management</li>
-            <li>Dealer business onboarding and vehicle listings</li>
-            <li>Role-protected dashboards and profile management</li>
-            <li>Clear, separate flows for users and business owners</li>
+            <li>Vast selection of premium vehicles</li>
+            <li>Transparent pricing with no hidden fees</li>
+            <li>Dedicated dealer tools and business dashboards</li>
+            <li>Seamless booking and profile management</li>
           </ul>
+        </div>
+      </div>
+
+      <div className={styles.howItWorks}>
+        <h2>How It Works</h2>
+        <div className={styles.stepsGrid}>
+          <div className={styles.stepCard}>
+            <div className={styles.stepNumber}>1</div>
+            <h3>Create an Account</h3>
+            <p>Sign up in seconds. Verify your profile to unlock full access to our extensive vehicle network.</p>
+          </div>
+          <div className={styles.stepCard}>
+            <div className={styles.stepNumber}>2</div>
+            <h3>Find Your Car</h3>
+            <p>Browse through hundreds of listings from top-rated dealers and find the perfect match for your needs.</p>
+          </div>
+          <div className={styles.stepCard}>
+            <div className={styles.stepNumber}>3</div>
+            <h3>Hit the Road</h3>
+            <p>Book instantly, pick up your keys, and enjoy the ride. Our platform makes it that simple.</p>
+          </div>
         </div>
       </div>
 

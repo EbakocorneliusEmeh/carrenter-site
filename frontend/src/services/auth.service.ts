@@ -31,14 +31,17 @@ function normalizeUser(payload: any): AuthUser | null {
     return null;
   }
 
+  const customerProfile = user.customerProfile;
+  const dealerProfile = user.dealerProfile;
+
   return {
     id: user.id ?? user._id ?? user.userId ?? undefined,
-    fullName: user.fullName ?? user.name ?? "",
+    fullName: user.fullName ?? customerProfile?.fullName ?? user.name ?? "",
     email: user.email ?? "",
     phone: user.phone ?? "",
     role: typeof user.role === "string" ? user.role.toLowerCase() : "customer",
-    businessName: user.businessName ?? null,
-    avatarUrl: user.avatarUrl ?? null,
+    businessName: user.businessName ?? dealerProfile?.businessName ?? null,
+    avatarUrl: user.avatarUrl ?? customerProfile?.profilePhoto ?? null,
   };
 }
 

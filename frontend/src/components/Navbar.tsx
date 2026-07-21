@@ -32,7 +32,7 @@ export default function Navbar() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link className={styles.brand} href="/">
-          CarRent
+          DRIVENOW
         </Link>
 
         <nav className={styles.nav} aria-label="Primary">
@@ -43,20 +43,20 @@ export default function Navbar() {
           {isAuthenticated ? (
             <div className={styles.authLinks}>
               <Link 
-                className={pathname === "/dashboard" ? styles.active : ""} 
-                href="/dashboard"
-              >
-                Dashboard
-              </Link>
-              <Link 
                 className={pathname === "/profile" ? styles.active : ""} 
                 href="/profile"
               >
                 Profile
               </Link>
+              <Link 
+                className={styles.solidButton} 
+                href="/dashboard"
+              >
+                Dashboard
+              </Link>
               <button
                 type="button"
-                className={styles.logoutButton}
+                className={styles.outlineButton}
                 onClick={handleLogout}
                 disabled={isLoading}
               >
@@ -65,11 +65,12 @@ export default function Navbar() {
             </div>
           ) : (
             <div className={styles.authLinks}>
-              {authLinks.map((link) => (
-                <Link key={link.href} href={link.href}>
-                  {link.label}
-                </Link>
-              ))}
+              <Link className={styles.outlineButton} href="/login">
+                Login
+              </Link>
+              <Link className={styles.solidButton} href="/register">
+                Sign in
+              </Link>
             </div>
           )}
         </nav>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { roleRedirect } from "@/utils/roleRedirect";
 import ProfileSettings from "@/components/ProfileSettings";
 import styles from "./page.module.css";
 
