@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { listDealerPages } from "@/services/dealer.service";
 import { listPublicVehicles } from "@/services/public-vehicles.service";
@@ -9,6 +10,7 @@ import type { DealerPage } from "@/types/auth.types";
 import type { Vehicle } from "@/types/vehicle.types";
 import { ListingType } from "@/types/vehicle.types";
 import styles from "./page.module.css";
+import BookingModal from "@/components/BookingModal";
 
 export default function MainDashboard() {
   const { user, isLoading: authLoading } = useAuth();
@@ -16,6 +18,9 @@ export default function MainDashboard() {
   const [pagesLoading, setPagesLoading] = useState(true);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(true);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [bookingVehicle, setBookingVehicle] = useState<Vehicle | null>(null);
 
   const isDealer = user?.role?.toLowerCase() === "dealer";
 
@@ -40,6 +45,16 @@ export default function MainDashboard() {
       .finally(() => setVehiclesLoading(false));
   }, [authLoading]);
 
+  // Listen for openBooking event dispatched from VehicleDetailModal CTA
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const vehicle = (e as CustomEvent<Vehicle>).detail;
+      if (vehicle) setBookingVehicle(vehicle);
+    };
+    window.addEventListener('openBooking', handler);
+    return () => window.removeEventListener('openBooking', handler);
+  }, []);
+
   const hasPages = pages.length > 0;
   const firstPage = pages[0];
 
@@ -52,9 +67,9 @@ export default function MainDashboard() {
   }
 
   function getPriceLabel(vehicle: Vehicle) {
-    if (vehicle.listingType === ListingType.RENT) return `$${vehicle.dailyRentalPrice}/day`;
-    if (vehicle.listingType === ListingType.SALE) return `$${vehicle.salePrice}`;
-    return `$${vehicle.dailyRentalPrice}/day · $${vehicle.salePrice} (Buy)`;
+    if (vehicle.listingType === ListingType.RENT) return `${vehicle.dailyRentalPrice} FCFA/day`;
+    if (vehicle.listingType === ListingType.SALE) return `${vehicle.salePrice} FCFA`;
+    return `${vehicle.dailyRentalPrice} FCFA/day · ${vehicle.salePrice} FCFA (Buy)`;
   }
 
   function getBadgeClass(type: ListingType) {
@@ -65,16 +80,43 @@ export default function MainDashboard() {
 
   return (
     <div className={styles.container}>
+      {/* Image Modal */}
+      {isImageModalOpen && user?.avatarUrl && (
+        <div className={styles.imageModal} onClick={() => setIsImageModalOpen(false)}>
+          <div className={styles.imageModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.closeModalBtn} onClick={() => setIsImageModalOpen(false)}>×</button>
+            <Image
+              src={user.avatarUrl}
+              alt={user.fullName || "Profile"}
+              width={500}
+              height={500}
+              className={styles.fullSizeImage}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Welcome Header */}
       <header className={styles.header}>
-        <div className={styles.avatar}>
-          {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+        <div className={styles.avatarWrapper} onClick={() => user?.avatarUrl && setIsImageModalOpen(true)} style={{ cursor: user?.avatarUrl ? "pointer" : "default" }}>
+          {user?.avatarUrl ? (
+            <Image
+              src={user.avatarUrl}
+              alt={user.fullName || "Profile"}
+              width={80}
+              height={80}
+              className={styles.avatarImg}
+            />
+          ) : (
+            <div className={styles.avatar}>
+              {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+            </div>
+          )}
         </div>
         <div>
           <h1 className={styles.title}>
             Welcome back, {user?.fullName || "there"}!
           </h1>
-          <p className={styles.subtitle}>{user?.email}</p>
         </div>
       </header>
 
@@ -124,16 +166,19 @@ export default function MainDashboard() {
           </div>
         ) : (
           <div className={styles.ctaContent}>
-            <span className={styles.ctaIcon}>💼</span>
+            <span className={styles.ctaIcon}>👋</span>
             <div className={styles.ctaText}>
-              <h2 className={styles.ctaTitle}>Become a Business Owner</h2>
+              <h2 className={styles.ctaTitle}>Manage Your Bookings</h2>
               <p className={styles.ctaDesc}>
-                Ready to list your vehicles and grow your rental business? Upgrade your account to get started today.
+                View your current rentals, cancel requests, or track past bookings in your personal dashboard. You can also upgrade to start your own rental business!
               </p>
             </div>
             <div className={styles.ctaActions}>
-              <Link className={styles.primaryBtn} href="/customer/dashboard?section=business">
-                Create Your Business Page
+              <Link className={styles.primaryBtn} href="/customer/dashboard?section=rentals">
+                Manage My Rentals
+              </Link>
+              <Link className={styles.secondaryBtn} href="/customer/dashboard?section=business">
+                Become a Dealer
               </Link>
             </div>
           </div>
@@ -177,15 +222,296 @@ export default function MainDashboard() {
                   </p>
                   <p className={styles.vehicleCardPrice}>{getPriceLabel(vehicle)}</p>
                   <p className={styles.vehicleCardLocation}>📍 {vehicle.pickupLocation}</p>
-                  <a href="#" className={styles.vehicleCardBtn}>
-                    {vehicle.listingType === ListingType.SALE ? "Enquire" : "Rent Now"}
-                  </a>
+                  {vehicle.dealer && vehicle.dealer.slug && (
+                    <p className={styles.vehicleCardDealer} style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                      Listed by: <Link href={`/business/${vehicle.dealer.slug}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}><strong>{vehicle.dealer.businessName}</strong></Link>
+                    </p>
+                  )}
+                  <div className={styles.cardActions}>
+                    <button 
+                      className={styles.viewMoreBtn}
+                      onClick={() => setSelectedVehicle(vehicle)}
+                    >
+                      View Details
+                    </button>
+                    <a
+                      href="#"
+                      className={styles.rentBtn}
+                      onClick={(e) => { 
+                        e.preventDefault(); 
+                        if (vehicle.isAvailable) setBookingVehicle(vehicle); 
+                      }}
+                      style={{
+                        opacity: vehicle.isAvailable ? 1 : 0.6,
+                        cursor: vehicle.isAvailable ? 'pointer' : 'not-allowed',
+                        backgroundColor: vehicle.isAvailable ? '' : 'var(--surface-border)',
+                        color: vehicle.isAvailable ? '' : 'var(--text-muted)'
+                      }}
+                    >
+                      {!vehicle.isAvailable ? "Unavailable" : vehicle.listingType === "SALE" ? "Enquire" : "Rent Now"}
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      {/* Vehicle Detail Modal */}
+      {selectedVehicle && (
+        <VehicleDetailModal
+          vehicle={selectedVehicle}
+          onClose={() => setSelectedVehicle(null)}
+        />
+      )}
+
+      {/* Booking Modal */}
+      {bookingVehicle && (
+        <BookingModal
+          vehicle={bookingVehicle}
+          onClose={() => setBookingVehicle(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   Vehicle Detail Modal (General Dashboard)
+   ═══════════════════════════════════════════════════════ */
+
+interface VehicleDetailModalProps {
+  vehicle: Vehicle;
+  onClose: () => void;
+}
+
+function VehicleDetailModal({ vehicle, onClose }: VehicleDetailModalProps) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const images = vehicle.images && vehicle.images.length > 0 ? vehicle.images : [];
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  const goToPrev = useCallback(() => {
+    setActiveImageIndex((i) => (i > 0 ? i - 1 : images.length - 1));
+  }, [images.length]);
+
+  const goToNext = useCallback(() => {
+    setActiveImageIndex((i) => (i < images.length - 1 ? i + 1 : 0));
+  }, [images.length]);
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.modalClose} onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+
+        <div className={styles.modalBody}>
+          {/* Image gallery */}
+          <div className={styles.gallerySection}>
+            {images.length > 0 ? (
+              <>
+                <div className={styles.galleryMain}>
+                  <img
+                    src={images[activeImageIndex].url}
+                    alt={`${vehicle.brand} ${vehicle.model} - Image ${activeImageIndex + 1}`}
+                    className={styles.galleryImage}
+                  />
+                  {images.length > 1 && (
+                    <>
+                      <button className={`${styles.galleryNav} ${styles.galleryNavPrev}`} onClick={goToPrev}>‹</button>
+                      <button className={`${styles.galleryNav} ${styles.galleryNavNext}`} onClick={goToNext}>›</button>
+                      <div className={styles.galleryCounter}>
+                        {activeImageIndex + 1} / {images.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+                {images.length > 1 && (
+                  <div className={styles.galleryThumbs}>
+                    {images.map((img, idx) => (
+                      <button
+                        key={img.id}
+                        className={`${styles.galleryThumb} ${idx === activeImageIndex ? styles.galleryThumbActive : ""}`}
+                        onClick={() => setActiveImageIndex(idx)}
+                      >
+                        <img src={img.url} alt={`Thumbnail ${idx + 1}`} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={styles.galleryPlaceholder}>
+                <span>🚗</span>
+                <p>No images available</p>
+              </div>
+            )}
+          </div>
+
+          {/* Details */}
+          <div className={styles.detailsSection}>
+            <div className={styles.detailHeader}>
+              <h2 className={styles.detailTitle}>
+                {vehicle.year} {vehicle.brand} {vehicle.model}
+              </h2>
+              <span className={styles.detailBadge}>
+                {vehicle.listingType === "RENT"
+                  ? "For Rent"
+                  : vehicle.listingType === "SALE"
+                  ? "For Sale"
+                  : "Rent & Sale"}
+              </span>
+            </div>
+
+            {vehicle.name && vehicle.name !== `${vehicle.brand} ${vehicle.model}` && (
+              <p className={styles.detailSubtitle}>{vehicle.name}</p>
+            )}
+
+            {vehicle.dealer && vehicle.dealer.slug && (
+              <p className={styles.detailDealer} style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                Listed by: <Link href={`/business/${vehicle.dealer.slug}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}><strong>{vehicle.dealer.businessName}</strong></Link>
+              </p>
+            )}
+
+            {/* Pricing */}
+            <div className={styles.detailPricing}>
+              {(vehicle.listingType === "RENT" || vehicle.listingType === "BOTH") &&
+                vehicle.dailyRentalPrice && (
+                  <div className={styles.detailPriceCard}>
+                    <span className={styles.detailPriceLabel}>Daily Rental</span>
+                    <span className={styles.detailPriceValue}>
+                      {vehicle.dailyRentalPrice.toLocaleString()} FCFA
+                      <small>/day</small>
+                    </span>
+                  </div>
+                )}
+              {(vehicle.listingType === "SALE" || vehicle.listingType === "BOTH") &&
+                vehicle.salePrice && (
+                  <div className={styles.detailPriceCard}>
+                    <span className={styles.detailPriceLabel}>Sale Price</span>
+                    <span className={styles.detailPriceValue}>
+                      {vehicle.salePrice.toLocaleString()} FCFA
+                    </span>
+                  </div>
+                )}
+            </div>
+
+            {/* Specs */}
+            <div className={styles.specsGrid}>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>📅</span>
+                <div>
+                  <div className={styles.specLabel}>Year</div>
+                  <div className={styles.specValue}>{vehicle.year}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>🏷️</span>
+                <div>
+                  <div className={styles.specLabel}>Brand</div>
+                  <div className={styles.specValue}>{vehicle.brand}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>🚗</span>
+                <div>
+                  <div className={styles.specLabel}>Model</div>
+                  <div className={styles.specValue}>{vehicle.model}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>⛽</span>
+                <div>
+                  <div className={styles.specLabel}>Fuel Type</div>
+                  <div className={styles.specValue}>{vehicle.fuelType}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>⚙️</span>
+                <div>
+                  <div className={styles.specLabel}>Transmission</div>
+                  <div className={styles.specValue}>{vehicle.transmission}</div>
+                </div>
+              </div>
+              {vehicle.registrationNumber && (
+                <div className={styles.specItem}>
+                  <span className={styles.specIcon}>🔢</span>
+                  <div>
+                    <div className={styles.specLabel}>Registration</div>
+                    <div className={styles.specValue}>{vehicle.registrationNumber}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Features */}
+            {vehicle.features && vehicle.features.length > 0 && (
+              <div className={styles.featuresBlock}>
+                <h3 className={styles.featuresTitle}>Features</h3>
+                <div className={styles.featuresList}>
+                  {vehicle.features.map((feat, idx) => (
+                    <span key={idx} className={styles.featureTag}>✓ {feat}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pickup location */}
+            {vehicle.pickupLocation && (
+              <div className={styles.pickupBlock}>
+                <span className={styles.pickupIcon}>📍</span>
+                <div>
+                  <div className={styles.pickupLabel}>Pickup Location</div>
+                  <div className={styles.pickupValue}>{vehicle.pickupLocation}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Availability */}
+            <div className={styles.availabilityBadge} data-available={vehicle.isAvailable}>
+              {vehicle.isAvailable ? "✓ Available" : "✗ Unavailable"}
+            </div>
+
+            {/* Modal CTA */}
+            <div className={styles.modalCtaBlock}>
+              <button
+                className={styles.modalRentBtn}
+                disabled={!vehicle.isAvailable}
+                style={{
+                  opacity: vehicle.isAvailable ? 1 : 0.6,
+                  cursor: vehicle.isAvailable ? 'pointer' : 'not-allowed',
+                  backgroundColor: vehicle.isAvailable ? '' : 'var(--surface-border)',
+                  color: vehicle.isAvailable ? '' : 'var(--text-muted)'
+                }}
+                onClick={() => {
+                  if (!vehicle.isAvailable) return;
+                  // Close detail modal, open booking modal
+                  onClose();
+                  // Slight delay so CSS animation doesn't clash
+                  setTimeout(() => {
+                    const event = new CustomEvent('openBooking', { detail: vehicle });
+                    window.dispatchEvent(event);
+                  }, 150);
+                }}
+              >
+                {!vehicle.isAvailable ? "Unavailable" : vehicle.listingType === "SALE" ? "Enquire About This Vehicle" : "Rent This Vehicle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

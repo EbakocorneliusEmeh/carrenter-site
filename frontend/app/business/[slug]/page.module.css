@@ -69,12 +69,18 @@
 /* ─── Hero Banner ───────────────────────────────── */
 .heroBanner {
   width: 100%;
-  height: 280px;
+  height: 380px; /* Increased height */
   background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0284c7 100%);
   background-size: cover;
   background-position: center;
   position: relative;
   overflow: hidden;
+  animation: bannerFadeIn 0.8s ease-out;
+}
+
+@keyframes bannerFadeIn {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .heroBannerOverlay {
@@ -82,36 +88,17 @@
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.15) 0%,
-    rgba(0, 0, 0, 0.5) 100%
+    rgba(15, 23, 42, 0.2) 0%,
+    rgba(15, 23, 42, 0.7) 100%
   );
-}
-
-.homeLink {
-  position: absolute;
-  top: 20px;
-  left: 24px;
-  z-index: 10;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 6px 14px;
-  border-radius: 999px;
-  backdrop-filter: blur(6px);
-  transition: background 0.2s;
-}
-
-.homeLink:hover {
-  background: rgba(0, 0, 0, 0.5);
 }
 
 /* ─── Profile Header ────────────────────────────── */
 .profileHeader {
   background: var(--surface);
   border-bottom: 1px solid var(--surface-border);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  position: relative;
 }
 
 .profileHeaderInner {
@@ -126,46 +113,64 @@
 
 /* Logo overlaps the banner */
 .logoWrapper {
-  margin-top: -60px;
+  margin-top: -80px; /* Increased overlap */
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  border-radius: 50%;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
 .logo {
-  width: 120px;
-  height: 120px;
+  width: 160px; /* Larger logo */
+  height: 160px;
   border-radius: 50%;
   object-fit: cover;
-  border: 5px solid var(--surface);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  border: 4px solid var(--surface);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .logoPlaceholder {
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   color: #fff;
-  font-size: 2.8rem;
+  font-size: 3.5rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 5px solid var(--surface);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  border: 4px solid var(--surface);
+  transition: transform 0.3s ease;
+}
+
+.logoPlaceholder:hover {
+  transform: scale(1.05);
 }
 
 .profileMeta {
   flex: 1;
   min-width: 200px;
-  padding-top: 16px;
+  padding-top: 24px;
 }
 
 .businessName {
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 2.5rem; /* Larger font */
+  font-weight: 900;
   color: var(--text);
-  margin: 0 0 8px;
-  line-height: 1.15;
+  margin: 0 0 10px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .metaRow {
@@ -215,24 +220,26 @@
 .contactChip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
+  gap: 8px;
+  padding: 10px 20px;
   border-radius: 999px;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
   background: var(--surface-strong);
   color: var(--text);
   border: 1px solid var(--surface-border);
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .contactChip:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(2, 132, 199, 0.06);
-  transform: translateY(-1px);
+  background: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.12);
 }
 
 .contactChipGreen:hover {
@@ -512,6 +519,540 @@ a.contactValue:hover {
   background: rgba(22, 163, 74, 0.06);
 }
 
+/* ─── View More Button ──────────────────────────── */
+.viewMoreBtn {
+  flex: 1;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong, #0369a1));
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-width: 110px;
+  letter-spacing: 0.02em;
+}
+
+.viewMoreBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
+  filter: brightness(1.08);
+}
+
+.viewMoreBtn:active {
+  transform: translateY(0);
+}
+
+.rentNowBtn {
+  flex: 1;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-width: 110px;
+  letter-spacing: 0.02em;
+}
+
+.rentNowBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.3);
+  filter: brightness(1.08);
+}
+
+.rentNowBtn:active {
+  transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════
+   Vehicle Detail Modal
+   ═══════════════════════════════════════════════════ */
+
+/* Overlay */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Content panel */
+.modalContent {
+  position: relative;
+  width: 100%;
+  max-width: 1050px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--surface-border);
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Scrollbar styling */
+.modalContent::-webkit-scrollbar {
+  width: 6px;
+}
+.modalContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modalContent::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: 3px;
+}
+
+/* Close button */
+.modalClose {
+  position: sticky;
+  top: 12px;
+  float: right;
+  margin-right: 12px;
+  z-index: 10;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.modalClose:hover {
+  background: var(--surface-strong);
+  color: var(--text);
+  transform: rotate(90deg);
+}
+
+/* Modal body — side-by-side layout */
+.modalBody {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+/* ─── Image Gallery ─────────────────────────────── */
+.gallerySection {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.galleryMain {
+  position: relative;
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  background: var(--surface-strong);
+  aspect-ratio: 4 / 3;
+}
+
+.galleryImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+.galleryNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  line-height: 1;
+}
+
+.galleryNav:hover {
+  background: rgba(0, 0, 0, 0.75);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.galleryNavPrev { left: 10px; }
+.galleryNavNext { right: 10px; }
+
+.galleryCounter {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.05em;
+}
+
+.galleryThumbs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.galleryThumbs::-webkit-scrollbar {
+  height: 4px;
+}
+.galleryThumbs::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: 2px;
+}
+
+.galleryThumb {
+  flex-shrink: 0;
+  width: 64px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+  padding: 0;
+  background: none;
+}
+
+.galleryThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.galleryThumb:hover {
+  opacity: 0.8;
+}
+
+.galleryThumbActive {
+  opacity: 1;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+.galleryPlaceholder {
+  aspect-ratio: 4 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-strong);
+  border-radius: var(--radius-lg, 12px);
+  border: 1px dashed var(--surface-border);
+  color: var(--text-muted);
+  gap: 8px;
+}
+
+.galleryPlaceholder span {
+  font-size: 3rem;
+}
+
+.galleryPlaceholder p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ─── Details Section ───────────────────────────── */
+.detailsSection {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-left: 1px solid var(--surface-border);
+  overflow-y: auto;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detailTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.detailBadge {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong, #0369a1));
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.detailSubtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: -8px 0 0;
+  font-style: italic;
+}
+
+/* Pricing cards */
+.detailPricing {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detailPriceCard {
+  flex: 1;
+  min-width: 140px;
+  background: var(--surface-strong);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md, 10px);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailPriceLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.detailPriceValue {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.detailPriceValue small {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+/* Specs grid */
+.specsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.specItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-strong);
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--surface-border);
+}
+
+.specIcon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.specLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.specValue {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Features */
+.featuresBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.featuresTitle {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.featuresList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.featureTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 14px;
+  background: rgba(2, 132, 199, 0.08);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid rgba(2, 132, 199, 0.15);
+  transition: all 0.2s ease;
+}
+
+.featureTag:hover {
+  background: rgba(2, 132, 199, 0.14);
+}
+
+/* Pickup location */
+.pickupBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-strong);
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--surface-border);
+}
+
+.pickupIcon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.pickupLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.pickupValue {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Availability badge */
+.availabilityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.availabilityBadge[data-available="true"] {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.availabilityBadge[data-available="false"] {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+/* Detail action buttons */
+.detailActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.detailActionBtn {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+  padding: 12px 18px;
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  background: var(--surface-strong);
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.detailActionBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(2, 132, 199, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
+}
+
+.detailActionWhatsapp:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.06);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.1);
+}
+
 /* ─── Footer ────────────────────────────────────── */
 .pageFooter {
   border-top: 1px solid var(--surface-border);
@@ -534,22 +1075,22 @@ a.contactValue:hover {
 /* ─── Responsive ────────────────────────────────── */
 @media (max-width: 640px) {
   .heroBanner {
-    height: 180px;
+    height: 220px;
   }
 
   .logo,
   .logoPlaceholder {
-    width: 90px;
-    height: 90px;
-    font-size: 2rem;
+    width: 120px;
+    height: 120px;
+    font-size: 2.5rem;
   }
 
   .logoWrapper {
-    margin-top: -45px;
+    margin-top: -60px;
   }
 
   .businessName {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
   }
 
   .profileHeaderInner {
@@ -565,5 +1106,51 @@ a.contactValue:hover {
 
   .vehicleGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Modal responsive */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modalContent {
+    max-height: 95vh;
+    border-radius: 20px 20px 0 0;
+    animation: modalSlideUpMobile 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes modalSlideUpMobile {
+    from { opacity: 0; transform: translateY(100%); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .modalBody {
+    grid-template-columns: 1fr;
+  }
+
+  .detailsSection {
+    border-left: none;
+    border-top: 1px solid var(--surface-border);
+    padding: 24px 20px;
+  }
+
+  .gallerySection {
+    padding: 16px;
+  }
+
+  .detailTitle {
+    font-size: 1.3rem;
+  }
+
+  .specsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .detailPriceValue {
+    font-size: 1.1rem;
   }
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { getPublicDealerPageBySlug } from "@/services/dealer.service";
 import type { PublicDealerPage } from "@/types/auth.types";
+import type { Vehicle } from "@/types/vehicle.types";
 import styles from "./page.module.css";
+import BookingModal from "@/components/BookingModal";
 
 export default function BusinessPage() {
   const params = useParams();
@@ -13,6 +15,8 @@ export default function BusinessPage() {
   const [page, setPage] = useState<PublicDealerPage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [bookingVehicle, setBookingVehicle] = useState<Vehicle | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -60,7 +64,6 @@ export default function BusinessPage() {
         }
       >
         <div className={styles.heroBannerOverlay} />
-        <Link href="/" className={styles.homeLink}>← Back to Home</Link>
       </div>
 
       {/* ── PROFILE HEADER ──────────────────────────── */}
@@ -262,7 +265,7 @@ export default function BusinessPage() {
                           <div className={styles.priceTag}>
                             <span className={styles.priceLabel}>Rent</span>
                             <span className={styles.priceValue}>
-                              ${vehicle.dailyRentalPrice}
+                              {vehicle.dailyRentalPrice} FCFA
                               <small>/day</small>
                             </span>
                           </div>
@@ -272,21 +275,36 @@ export default function BusinessPage() {
                           <div className={styles.priceTag}>
                             <span className={styles.priceLabel}>Buy</span>
                             <span className={styles.priceValue}>
-                              ${vehicle.salePrice.toLocaleString()}
+                              {vehicle.salePrice.toLocaleString()} FCFA
                             </span>
                           </div>
                         )}
                     </div>
 
+                    <p className={styles.vehicleCardDealer} style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '12px 0 0' }}>
+                      Listed by: <Link href={`/business/${page.slug}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}><strong>{page.businessName}</strong></Link>
+                    </p>
+
                     <div className={styles.vehicleActions}>
-                      {page.contactPhone && (
-                        <a
-                          href={`tel:${page.contactPhone}`}
-                          className={styles.inquireBtn}
-                        >
-                          📞 Call Dealer
-                        </a>
-                      )}
+                      <button
+                        className={styles.viewMoreBtn}
+                        onClick={() => setSelectedVehicle(vehicle)}
+                      >
+                        View Details →
+                      </button>
+                      <button
+                        className={styles.rentNowBtn}
+                        onClick={() => vehicle.isAvailable && setBookingVehicle(vehicle)}
+                        disabled={!vehicle.isAvailable}
+                        style={{
+                          opacity: vehicle.isAvailable ? 1 : 0.6,
+                          cursor: vehicle.isAvailable ? 'pointer' : 'not-allowed',
+                          backgroundColor: vehicle.isAvailable ? '' : 'var(--surface-border)',
+                          color: vehicle.isAvailable ? '' : 'var(--text-muted)'
+                        }}
+                      >
+                        {!vehicle.isAvailable ? "Unavailable" : vehicle.listingType === "SALE" ? "Enquire" : "🚗 Rent Now"}
+                      </button>
                       {page.contactWhatsapp && (
                         <a
                           href={`https://wa.me/${page.contactWhatsapp.replace(/\D/g, "")}?text=Hi, I'm interested in the ${vehicle.year} ${vehicle.brand} ${vehicle.model}`}
@@ -306,6 +324,23 @@ export default function BusinessPage() {
         </section>
       </div>
 
+      {/* ── VEHICLE DETAIL MODAL ────────────────────── */}
+      {selectedVehicle && (
+        <VehicleDetailModal
+          vehicle={selectedVehicle}
+          dealerPage={page}
+          onClose={() => setSelectedVehicle(null)}
+        />
+      )}
+
+      {/* ── BOOKING MODAL ───────────────────────────── */}
+      {bookingVehicle && (
+        <BookingModal
+          vehicle={bookingVehicle}
+          onClose={() => setBookingVehicle(null)}
+        />
+      )}
+
       {/* ── FOOTER ──────────────────────────────────── */}
       <footer className={styles.pageFooter}>
         <p>
@@ -315,6 +350,254 @@ export default function BusinessPage() {
           </Link>
         </p>
       </footer>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   Vehicle Detail Modal
+   ═══════════════════════════════════════════════════════ */
+
+interface VehicleDetailModalProps {
+  vehicle: Vehicle;
+  dealerPage: PublicDealerPage;
+  onClose: () => void;
+}
+
+function VehicleDetailModal({ vehicle, dealerPage, onClose }: VehicleDetailModalProps) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const images = vehicle.images && vehicle.images.length > 0 ? vehicle.images : [];
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  const goToPrev = useCallback(() => {
+    setActiveImageIndex((i) => (i > 0 ? i - 1 : images.length - 1));
+  }, [images.length]);
+
+  const goToNext = useCallback(() => {
+    setActiveImageIndex((i) => (i < images.length - 1 ? i + 1 : 0));
+  }, [images.length]);
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+
+        {/* Close button */}
+        <button className={styles.modalClose} onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+
+        <div className={styles.modalBody}>
+
+          {/* ── Image gallery ───────────────── */}
+          <div className={styles.gallerySection}>
+            {images.length > 0 ? (
+              <>
+                <div className={styles.galleryMain}>
+                  <img
+                    src={images[activeImageIndex].url}
+                    alt={`${vehicle.brand} ${vehicle.model} - Image ${activeImageIndex + 1}`}
+                    className={styles.galleryImage}
+                  />
+                  {images.length > 1 && (
+                    <>
+                      <button className={`${styles.galleryNav} ${styles.galleryNavPrev}`} onClick={goToPrev}>‹</button>
+                      <button className={`${styles.galleryNav} ${styles.galleryNavNext}`} onClick={goToNext}>›</button>
+                      <div className={styles.galleryCounter}>
+                        {activeImageIndex + 1} / {images.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+                {images.length > 1 && (
+                  <div className={styles.galleryThumbs}>
+                    {images.map((img, idx) => (
+                      <button
+                        key={img.id}
+                        className={`${styles.galleryThumb} ${idx === activeImageIndex ? styles.galleryThumbActive : ""}`}
+                        onClick={() => setActiveImageIndex(idx)}
+                      >
+                        <img src={img.url} alt={`Thumbnail ${idx + 1}`} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={styles.galleryPlaceholder}>
+                <span>🚗</span>
+                <p>No images available</p>
+              </div>
+            )}
+          </div>
+
+          {/* ── Details section ──────────────── */}
+          <div className={styles.detailsSection}>
+
+            {/* Title & badge */}
+            <div className={styles.detailHeader}>
+              <h2 className={styles.detailTitle}>
+                {vehicle.year} {vehicle.brand} {vehicle.model}
+              </h2>
+              <span className={styles.detailBadge}>
+                {vehicle.listingType === "RENT"
+                  ? "For Rent"
+                  : vehicle.listingType === "SALE"
+                  ? "For Sale"
+                  : "Rent & Sale"}
+              </span>
+            </div>
+
+            {vehicle.name && vehicle.name !== `${vehicle.brand} ${vehicle.model}` && (
+              <p className={styles.detailSubtitle}>{vehicle.name}</p>
+            )}
+
+            <p className={styles.detailDealer} style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Listed by: <Link href={`/business/${dealerPage.slug}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}><strong>{dealerPage.businessName}</strong></Link>
+            </p>
+
+            {/* Pricing */}
+            <div className={styles.detailPricing}>
+              {(vehicle.listingType === "RENT" || vehicle.listingType === "BOTH") &&
+                vehicle.dailyRentalPrice && (
+                  <div className={styles.detailPriceCard}>
+                    <span className={styles.detailPriceLabel}>Daily Rental</span>
+                    <span className={styles.detailPriceValue}>
+                      {vehicle.dailyRentalPrice.toLocaleString()} FCFA
+                      <small>/day</small>
+                    </span>
+                  </div>
+                )}
+              {(vehicle.listingType === "SALE" || vehicle.listingType === "BOTH") &&
+                vehicle.salePrice && (
+                  <div className={styles.detailPriceCard}>
+                    <span className={styles.detailPriceLabel}>Sale Price</span>
+                    <span className={styles.detailPriceValue}>
+                      {vehicle.salePrice.toLocaleString()} FCFA
+                    </span>
+                  </div>
+                )}
+            </div>
+
+            {/* Specs grid */}
+            <div className={styles.specsGrid}>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>📅</span>
+                <div>
+                  <div className={styles.specLabel}>Year</div>
+                  <div className={styles.specValue}>{vehicle.year}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>🏷️</span>
+                <div>
+                  <div className={styles.specLabel}>Brand</div>
+                  <div className={styles.specValue}>{vehicle.brand}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>🚗</span>
+                <div>
+                  <div className={styles.specLabel}>Model</div>
+                  <div className={styles.specValue}>{vehicle.model}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>⛽</span>
+                <div>
+                  <div className={styles.specLabel}>Fuel Type</div>
+                  <div className={styles.specValue}>{vehicle.fuelType}</div>
+                </div>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specIcon}>⚙️</span>
+                <div>
+                  <div className={styles.specLabel}>Transmission</div>
+                  <div className={styles.specValue}>{vehicle.transmission}</div>
+                </div>
+              </div>
+              {vehicle.registrationNumber && (
+                <div className={styles.specItem}>
+                  <span className={styles.specIcon}>🔢</span>
+                  <div>
+                    <div className={styles.specLabel}>Registration</div>
+                    <div className={styles.specValue}>{vehicle.registrationNumber}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Features */}
+            {vehicle.features && vehicle.features.length > 0 && (
+              <div className={styles.featuresBlock}>
+                <h3 className={styles.featuresTitle}>Features</h3>
+                <div className={styles.featuresList}>
+                  {vehicle.features.map((feat, idx) => (
+                    <span key={idx} className={styles.featureTag}>✓ {feat}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pickup location */}
+            {vehicle.pickupLocation && (
+              <div className={styles.pickupBlock}>
+                <span className={styles.pickupIcon}>📍</span>
+                <div>
+                  <div className={styles.pickupLabel}>Pickup Location</div>
+                  <div className={styles.pickupValue}>{vehicle.pickupLocation}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Availability */}
+            <div className={styles.availabilityBadge} data-available={vehicle.isAvailable}>
+              {vehicle.isAvailable ? "✓ Available Now" : "✗ Currently Unavailable"}
+            </div>
+
+            {/* Contact actions */}
+            <div className={styles.detailActions}>
+              {dealerPage.contactPhone && (
+                <a
+                  href={`tel:${dealerPage.contactPhone}`}
+                  className={styles.detailActionBtn}
+                >
+                  📞 Call Dealer
+                </a>
+              )}
+              {dealerPage.contactWhatsapp && (
+                <a
+                  href={`https://wa.me/${dealerPage.contactWhatsapp.replace(/\D/g, "")}?text=Hi, I'm interested in the ${vehicle.year} ${vehicle.brand} ${vehicle.model}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${styles.detailActionBtn} ${styles.detailActionWhatsapp}`}
+                >
+                  💬 WhatsApp
+                </a>
+              )}
+              {dealerPage.contactEmail && (
+                <a
+                  href={`mailto:${dealerPage.contactEmail}?subject=Inquiry: ${vehicle.year} ${vehicle.brand} ${vehicle.model}`}
+                  className={styles.detailActionBtn}
+                >
+                  ✉ Email
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

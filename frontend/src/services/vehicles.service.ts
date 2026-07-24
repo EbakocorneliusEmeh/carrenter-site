@@ -20,8 +20,12 @@ export async function getVehicle(id: string) {
   return unwrapApiData<Vehicle>(response.data);
 }
 
-export async function updateVehicle(id: string, payload: UpdateVehiclePayload) {
-  const response = await api.put(`/api/v1/dealer/vehicles/${id}`, payload);
+export async function updateVehicle(id: string, payload: FormData) {
+  const response = await api.put(`/api/v1/dealer/vehicles/${id}`, payload, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return unwrapApiData<Vehicle>(response.data);
 }
 

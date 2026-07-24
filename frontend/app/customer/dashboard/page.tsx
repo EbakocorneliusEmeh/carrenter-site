@@ -1,19 +1,166 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { becomeDealer, getFriendlyError } from "@/services/auth.service";
+import { listCustomerBookings, cancelBooking, deleteBooking, type Booking } from "@/services/booking.service";
 import styles from "./page.module.css";
 
-type ActiveSection = "overview" | "profile" | "account" | "business";
-const VALID_SECTIONS: ActiveSection[] = ["overview", "profile", "account", "business"];
+type ActiveSection = "overview" | "rentals" | "profile" | "account" | "business";
+const VALID_SECTIONS: ActiveSection[] = ["overview", "rentals", "profile", "account", "business"];
+
+function ContactDealerModal({ dealer, onClose }: { dealer: any, onClose: () => void }) {
+  if (!dealer) return null;
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+        <button className={styles.closeBtn} onClick={onClose}>&times;</button>
+        <div className={styles.modalHeader}>
+          <span className={styles.modalIcon}>🏢</span>
+          <h3>Contact {dealer.businessName}</h3>
+        </div>
+        <p className={styles.modalDesc}>Use the methods below to reach out to the dealer and coordinate your vehicle pickup.</p>
+        
+        <div className={styles.contactList}>
+          {dealer.contactWhatsapp ? (
+            <a href={`whatsapp://send?phone=${dealer.contactWhatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className={styles.contactItem}>
+              <span className={styles.contactIcon}>💬</span>
+              <div className={styles.contactDetails}>
+                <strong>WhatsApp</strong>
+                <span>{dealer.contactWhatsapp}</span>
+              </div>
+            </a>
+          ) : (
+             <div className={`${styles.contactItem} ${styles.contactItemDisabled}`}>
+              <span className={styles.contactIcon}>💬</span>
+              <div className={styles.contactDetails}>
+                <strong>WhatsApp</strong>
+                <span>Not provided by dealer</span>
+              </div>
+            </div>
+          )}
+
+          {dealer.contactPhone ? (
+            <a href={`tel:${dealer.contactPhone}`} className={styles.contactItem}>
+              <span className={styles.contactIcon}>📞</span>
+              <div className={styles.contactDetails}>
+                <strong>Phone</strong>
+                <span>{dealer.contactPhone}</span>
+              </div>
+            </a>
+          ) : (
+            <div className={`${styles.contactItem} ${styles.contactItemDisabled}`}>
+              <span className={styles.contactIcon}>📞</span>
+              <div className={styles.contactDetails}>
+                <strong>Phone</strong>
+                <span>Not provided by dealer</span>
+              </div>
+            </div>
+          )}
+
+          {dealer.contactEmail ? (
+            <a href={`mailto:${dealer.contactEmail}`} className={styles.contactItem}>
+              <span className={styles.contactIcon}>✉️</span>
+              <div className={styles.contactDetails}>
+                <strong>Email</strong>
+                <span>{dealer.contactEmail}</span>
+              </div>
+            </a>
+          ) : (
+            <div className={`${styles.contactItem} ${styles.contactItemDisabled}`}>
+              <span className={styles.contactIcon}>✉️</span>
+              <div className={styles.contactDetails}>
+                <strong>Email</strong>
+                <span>Not provided by dealer</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CustomerRentals({ bookings, loading, onCancel, onDelete, onContact }: {
+  bookings: Booking[], loading: boolean, onCancel: (id:string)=>void, onDelete: (id:string)=>void, onContact: (dealer:any)=>void
+}) {
+  if (loading) return <div style={{ padding: "2rem" }}>Loading rentals...</div>;
+
+  if (!bookings.length) return (
+    <div className={styles.comingSoon}>
+      <div className={styles.comingSoonIcon}>🚗</div>
+      <p>You haven&apos;t rented any cars yet.</p>
+    </div>
+  );
+
+  return (
+    <div className={styles.rentalsList}>
+      {bookings.map(b => (
+        <div key={b.id} className={styles.rentalCard}>
+          <div className={styles.rentalCardHeader}>
+            <span className={styles.rentalStatus} data-status={b.status}>{b.status}</span>
+            <span className={styles.rentalDate}>{new Date(b.createdAt).toLocaleDateString()}</span>
+          </div>
+          <div className={styles.rentalCardBody}>
+            {b.vehicle?.images?.[0] ? (
+              <img src={b.vehicle.images[0].url} alt={b.vehicle?.name || "Vehicle"} className={styles.rentalImg} />
+            ) : (
+              <div className={styles.rentalImgPlaceholder}>🚗</div>
+            )}
+            <div className={styles.rentalInfo}>
+              <h4>{b.vehicle?.brand} {b.vehicle?.model} ({b.vehicle?.year})</h4>
+              {b.dealer && (
+                <p>
+                  Rented from:{" "}
+                  {b.dealer.slug ? (
+                    <Link href={`/business/${b.dealer.slug}`} className={styles.dealerLink}>
+                      <strong>{b.dealer.businessName}</strong>
+                    </Link>
+                  ) : (
+                    <strong>{b.dealer.businessName}</strong>
+                  )}
+                </p>
+              )}
+              {b.startDate && b.endDate && <p>Dates: {b.startDate} to {b.endDate}</p>}
+              {b.totalPrice && <p>Total: {b.totalPrice.toLocaleString()} FCFA</p>}
+            </div>
+          </div>
+
+          {b.dealer && (
+            <div className={styles.approvedContactBlock}>
+              <p className={styles.approvedContactTitle}>
+                {b.status === "APPROVED" ? "🎉 Your booking is approved! Coordinate with the dealer for pickup." : "💬 Have questions? Contact the dealer directly."}
+              </p>
+              <button className={styles.primaryBtn} onClick={() => onContact(b.dealer)}>Contact Dealer</button>
+            </div>
+          )}
+
+          <div className={styles.rentalCardActions}>
+            {b.status === "PENDING" && (
+              <button className={styles.cancelBtn} onClick={() => onCancel(b.id)}>Cancel Request</button>
+            )}
+            <button className={styles.deleteBtn} onClick={() => onDelete(b.id)}>Delete Record</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Inner component that safely uses useSearchParams (must be inside Suspense) */
 function CustomerDashboardInner() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedDealer, setSelectedDealer] = useState<any>(null);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
 
   const sectionParam = searchParams.get("section") as ActiveSection | null;
   const [activeSection, setActiveSection] = useState<ActiveSection>(
@@ -30,6 +177,48 @@ function CustomerDashboardInner() {
     }
   }, [sectionParam]);
 
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchBookings = () => {
+    setBookingsLoading(true);
+    listCustomerBookings()
+      .then(setBookings)
+      .catch(console.error)
+      .finally(() => setBookingsLoading(false));
+  };
+
+  const handleCancelBooking = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this booking?")) return;
+    try {
+      await cancelBooking(id);
+      fetchBookings();
+    } catch (e) {
+      alert("Failed to cancel");
+    }
+  };
+
+  const handleDeleteBooking = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this record?")) return;
+    try {
+      await deleteBooking(id);
+      fetchBookings();
+    } catch (e) {
+      alert("Failed to delete");
+    }
+  };
+
   const handleUpgrade = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!businessName.trim()) return;
@@ -44,24 +233,54 @@ function CustomerDashboardInner() {
     }
   };
 
+  const handleNotificationClick = (b: Booking) => {
+    setIsNotifOpen(false);
+    setActiveSection("rentals");
+    if (b.status === "APPROVED" && b.dealer) {
+      setSelectedDealer(b.dealer);
+    }
+  };
+
   const navItems: { key: ActiveSection; label: string; icon: string }[] = [
     { key: "overview",  label: "Overview",                icon: "🏠" },
+    { key: "rentals",   label: "My Rentals",              icon: "🚗" },
     { key: "profile",   label: "Update Profile",          icon: "👤" },
     { key: "account",   label: "Account Settings",        icon: "⚙️" },
     { key: "business",  label: "Become a Business Owner", icon: "🚀" },
   ];
 
+  const recentNotifications = bookings.filter(b => b.status === "APPROVED" || b.status === "REJECTED").slice(0, 5);
+  const unreadCount = recentNotifications.length; // Simplified for now
+
   return (
     <div className={styles.dashboardContainer}>
+      <ContactDealerModal dealer={selectedDealer} onClose={() => setSelectedDealer(null)} />
+
+      {/* Image Modal */}
+      {isImageModalOpen && user?.avatarUrl && (
+        <div className={styles.imageModal} onClick={() => setIsImageModalOpen(false)}>
+          <div className={styles.imageModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.closeModalBtn} onClick={() => setIsImageModalOpen(false)}>×</button>
+            <Image
+              src={user.avatarUrl}
+              alt={user.fullName || "Profile"}
+              width={500}
+              height={500}
+              className={styles.fullSizeImage}
+            />
+          </div>
+        </div>
+      )}
+
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <div className={styles.avatarWrapper}>
+          <div className={styles.avatarWrapper} onClick={() => user?.avatarUrl && setIsImageModalOpen(true)} style={{ cursor: user?.avatarUrl ? "pointer" : "default" }}>
             {user?.avatarUrl ? (
               <Image
                 src={user.avatarUrl}
                 alt={user.fullName || "Profile"}
-                width={52}
-                height={52}
+                width={80}
+                height={80}
                 className={styles.avatarImg}
               />
             ) : (
@@ -74,10 +293,32 @@ function CustomerDashboardInner() {
             <h1 className={styles.welcomeText}>
               Welcome back, <span>{user?.fullName || "Guest"}</span>
             </h1>
-            <p className={styles.welcomeSub}>{user?.phone || user?.email}</p>
           </div>
         </div>
-        <div className={styles.roleBadge}>Customer</div>
+        <div className={styles.headerRight}>
+          <div className={styles.notifWrapper} ref={notifRef}>
+            <button className={styles.notifBtn} onClick={() => setIsNotifOpen(!isNotifOpen)}>
+              🔔
+              {unreadCount > 0 && <span className={styles.notifBadge}>{unreadCount}</span>}
+            </button>
+            {isNotifOpen && (
+              <div className={styles.notifDropdown}>
+                <div className={styles.notifHeader}>Notifications</div>
+                <div className={styles.notifList}>
+                  {recentNotifications.length > 0 ? recentNotifications.map(b => (
+                    <div key={b.id} className={styles.notifItem} onClick={() => handleNotificationClick(b)}>
+                      <div className={styles.notifIcon}>{b.status === 'APPROVED' ? '✅' : '❌'}</div>
+                      <div className={styles.notifText}>
+                        <strong>{b.vehicle?.brand} {b.vehicle?.model}</strong> request was {b.status.toLowerCase()} by {b.dealer?.businessName}.
+                      </div>
+                    </div>
+                  )) : <div className={styles.notifEmpty}>No new notifications.</div>}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className={styles.roleBadge}>Customer</div>
+        </div>
       </header>
 
       <div className={styles.layout}>
@@ -104,8 +345,8 @@ function CustomerDashboardInner() {
               <p className={styles.sectionSub}>Here&apos;s a summary of your activity on CarRenter.</p>
               <div className={styles.statsGrid}>
                 {[
-                  { icon: "🚗", value: "0", label: "Active Rentals" },
-                  { icon: "📋", value: "0", label: "Past Bookings" },
+                  { icon: "🚗", value: bookings.filter(b=>b.status==="APPROVED").length, label: "Active Rentals" },
+                  { icon: "📋", value: bookings.length, label: "Total Bookings" },
                   { icon: "⭐", value: "—", label: "Reviews Given" },
                   { icon: "❤️", value: "0", label: "Saved Vehicles" },
                 ].map((s) => (
@@ -130,6 +371,20 @@ function CustomerDashboardInner() {
                   </div>
                 ))}
               </div>
+            </section>
+          )}
+
+          {activeSection === "rentals" && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>My Rentals</h2>
+              <p className={styles.sectionSub}>Manage cars you have rented or requested.</p>
+              <CustomerRentals 
+                bookings={bookings} 
+                loading={bookingsLoading} 
+                onCancel={handleCancelBooking} 
+                onDelete={handleDeleteBooking}
+                onContact={(dealer) => setSelectedDealer(dealer)}
+              />
             </section>
           )}
 

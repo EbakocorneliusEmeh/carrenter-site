@@ -31,6 +31,10 @@ export interface Vehicle {
   createdAt: string;
   updatedAt: string;
   images?: VehicleImage[];
+  dealer?: {
+    businessName: string;
+    slug: string | null;
+  };
 }
 
 export interface CreateVehicleImagePayload {

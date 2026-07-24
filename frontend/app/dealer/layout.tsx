@@ -14,6 +14,9 @@ export default function DealerLayout({
           <Link href="/dealer/vehicles" className={styles.navLink}>
             🚗 Vehicles
           </Link>
+          <Link href="/dealer/bookings" className={styles.navLink}>
+            📅 Bookings
+          </Link>
           <Link href="/dealer/settings" className={styles.navLink}>
             ⚙️ Settings
           </Link>

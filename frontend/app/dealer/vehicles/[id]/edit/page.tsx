@@ -1,18 +1,31 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { createVehicle } from "@/services/vehicles.service";
+import { useState, useRef, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
+import { getVehicle, updateVehicle } from "@/services/vehicles.service";
+import type { Vehicle } from "@/types/vehicle.types";
 import { ListingType } from "@/types/vehicle.types";
-import styles from "./page.module.css";
+import styles from "../../new/page.module.css";
+import editStyles from "./page.module.css";
 
-export default function NewVehiclePage() {
+export default function EditVehiclePage() {
   const router = useRouter();
+  const params = useParams();
+  const vehicleId = typeof params?.id === "string" ? params.id : "";
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const [files, setFiles] = useState<File[]>([]);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // New files to upload
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  // Existing images from DB
+  const [existingImages, setExistingImages] = useState<{ id: string; url: string }[]>([]);
+
   const [formData, setFormData] = useState({
     brand: "",
     model: "",
@@ -24,7 +37,32 @@ export default function NewVehiclePage() {
     dailyRentalPrice: "",
     salePrice: "",
     pickupLocation: "",
+    isAvailable: "true",
   });
+
+  useEffect(() => {
+    if (!vehicleId) return;
+    getVehicle(vehicleId)
+      .then((v) => {
+        setVehicle(v);
+        setFormData({
+          brand: v.brand ?? "",
+          model: v.model ?? "",
+          year: v.year ?? new Date().getFullYear(),
+          registrationNumber: v.registrationNumber ?? "",
+          fuelType: v.fuelType ?? "Petrol",
+          transmission: v.transmission ?? "Automatic",
+          listingType: v.listingType ?? ListingType.RENT,
+          dailyRentalPrice: v.dailyRentalPrice?.toString() ?? "",
+          salePrice: v.salePrice?.toString() ?? "",
+          pickupLocation: v.pickupLocation ?? "",
+          isAvailable: v.isAvailable ? "true" : "false",
+        });
+        setExistingImages((v.images ?? []).map((img) => ({ id: img.id, url: img.url })));
+      })
+      .catch(() => setError("Failed to load vehicle"))
+      .finally(() => setLoading(false));
+  }, [vehicleId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -32,48 +70,33 @@ export default function NewVehiclePage() {
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
-    if (e.clipboardData.files) {
-      const pastedFiles = Array.from(e.clipboardData.files).filter(f => f.type.startsWith('image/'));
-      if (pastedFiles.length > 0) {
-        setFiles(prev => [...prev, ...pastedFiles]);
-      }
-    }
+    const pastedFiles = Array.from(e.clipboardData.files).filter((f) => f.type.startsWith("image/"));
+    if (pastedFiles.length > 0) setNewFiles((prev) => [...prev, ...pastedFiles]);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    if (e.dataTransfer.files) {
-      const droppedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-      if (droppedFiles.length > 0) {
-        setFiles(prev => [...prev, ...droppedFiles]);
-      }
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    if (droppedFiles.length > 0) setNewFiles((prev) => [...prev, ...droppedFiles]);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-      setFiles(prev => [...prev, ...selectedFiles]);
+      const selected = Array.from(e.target.files).filter((f) => f.type.startsWith("image/"));
+      setNewFiles((prev) => [...prev, ...selected]);
     }
-    // Reset input so the same file can be selected again if removed
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
+  const removeNewFile = (index: number) => setNewFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeExistingImage = (id: string) => setExistingImages((prev) => prev.filter((img) => img.id !== id));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setError(null);
     try {
       const payload = new FormData();
-      payload.append("name", `${formData.brand} ${formData.model}`);
       payload.append("brand", formData.brand);
       payload.append("model", formData.model);
       payload.append("year", formData.year.toString());
@@ -81,31 +104,39 @@ export default function NewVehiclePage() {
       payload.append("fuelType", formData.fuelType);
       payload.append("transmission", formData.transmission);
       payload.append("listingType", formData.listingType);
+      payload.append("pickupLocation", formData.pickupLocation);
+      payload.append("isAvailable", formData.isAvailable);
       if (formData.dailyRentalPrice) payload.append("dailyRentalPrice", formData.dailyRentalPrice);
       if (formData.salePrice) payload.append("salePrice", formData.salePrice);
-      payload.append("pickupLocation", formData.pickupLocation);
-      payload.append("isAvailable", "true");
-      
-      files.forEach((file) => {
-        payload.append("images", file);
-      });
 
-      await createVehicle(payload);
-      router.push("/dealer/vehicles");
+      // Attach new image files
+      newFiles.forEach((file) => payload.append("images", file));
+
+      await updateVehicle(vehicleId, payload);
+      setSuccess(true);
+      setTimeout(() => router.push("/dealer/vehicles"), 1200);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to create vehicle listing");
+      setError(err?.response?.data?.message || "Failed to update vehicle");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  if (loading) return <div className={styles.container}><p>Loading vehicle...</p></div>;
+  if (!vehicle) return <div className={styles.container}><p>Vehicle not found.</p></div>;
+
   return (
     <div className={styles.container} onPaste={handlePaste}>
-      <h1 className={styles.title}>Add New Vehicle</h1>
-      
+      <div className={editStyles.topBar}>
+        <Link href="/dealer/vehicles" className={editStyles.backLink}>← Back to My Vehicles</Link>
+        <h1 className={styles.title}>Edit Vehicle</h1>
+      </div>
+
       {error && <div className={styles.error}>{error}</div>}
+      {success && <div className={editStyles.success}>✓ Vehicle updated! Redirecting...</div>}
 
       <form className={styles.form} onSubmit={handleSubmit}>
+        {/* Basic Details */}
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Basic Details</h2>
           <div className={styles.grid2}>
@@ -128,6 +159,7 @@ export default function NewVehiclePage() {
           </div>
         </div>
 
+        {/* Specifications */}
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Specifications</h2>
           <div className={styles.grid2}>
@@ -147,13 +179,14 @@ export default function NewVehiclePage() {
                 <option value="Manual">Manual</option>
               </select>
             </div>
-            <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
+            <div className={styles.formGroup} style={{ gridColumn: "span 2" }}>
               <label className={styles.label}>Pickup Location</label>
               <input required name="pickupLocation" value={formData.pickupLocation} onChange={handleChange} className={styles.input} placeholder="Full address" />
             </div>
           </div>
         </div>
 
+        {/* Listing & Pricing */}
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Listing & Pricing</h2>
           <div className={styles.formGroup}>
@@ -164,7 +197,6 @@ export default function NewVehiclePage() {
               <option value={ListingType.BOTH}>Both (Rent & Sale)</option>
             </select>
           </div>
-          
           <div className={styles.grid2}>
             {(formData.listingType === ListingType.RENT || formData.listingType === ListingType.BOTH) && (
               <div className={styles.formGroup}>
@@ -172,7 +204,6 @@ export default function NewVehiclePage() {
                 <input required type="number" name="dailyRentalPrice" value={formData.dailyRentalPrice} onChange={handleChange} className={styles.input} placeholder="0" />
               </div>
             )}
-            
             {(formData.listingType === ListingType.SALE || formData.listingType === ListingType.BOTH) && (
               <div className={styles.formGroup}>
                 <label className={styles.label}>Sale Price (FCFA)</label>
@@ -180,36 +211,52 @@ export default function NewVehiclePage() {
               </div>
             )}
           </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Availability</label>
+            <select name="isAvailable" value={formData.isAvailable} onChange={handleChange} className={styles.select}>
+              <option value="true">Available</option>
+              <option value="false">Not Available</option>
+            </select>
+          </div>
         </div>
 
+        {/* Images */}
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Media (Upload Images)</h2>
-          <div className={styles.formGroup}>
-            <div 
+          <h2 className={styles.sectionTitle}>Vehicle Images</h2>
+
+          {/* Existing images */}
+          {existingImages.length > 0 && (
+            <div className={editStyles.existingImagesSection}>
+              <p className={editStyles.existingLabel}>Current Images <span>(click × to remove)</span></p>
+              <div className={styles.fileList}>
+                {existingImages.map((img) => (
+                  <div key={img.id} className={styles.filePreview}>
+                    <img src={img.url} alt="Vehicle" />
+                    <button type="button" className={styles.removeFileBtn} onClick={() => removeExistingImage(img.id)}>✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New image uploads */}
+          <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
+            <p className={editStyles.existingLabel}>Add New Images <span>(replaces all existing if uploaded)</span></p>
+            <div
               className={styles.dropzone}
               onDrop={handleDrop}
-              onDragOver={handleDragOver}
+              onDragOver={(e) => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
             >
-              <p className={styles.dropzoneText}>Drag & drop images here, paste from clipboard, or click to select files</p>
-              <input 
-                type="file" 
-                multiple 
-                accept="image/*" 
-                ref={fileInputRef} 
-                onChange={handleFileSelect} 
-                className={styles.fileInput} 
-              />
+              <p className={styles.dropzoneText}>Drag & drop, paste, or click to add images</p>
+              <input type="file" multiple accept="image/*" ref={fileInputRef} onChange={handleFileSelect} className={styles.fileInput} />
             </div>
-            
-            {files.length > 0 && (
+            {newFiles.length > 0 && (
               <div className={styles.fileList}>
-                {files.map((file, index) => (
+                {newFiles.map((file, index) => (
                   <div key={index} className={styles.filePreview}>
                     <img src={URL.createObjectURL(file)} alt="Preview" />
-                    <button type="button" className={styles.removeFileBtn} onClick={() => removeFile(index)}>
-                      ✕
-                    </button>
+                    <button type="button" className={styles.removeFileBtn} onClick={() => removeNewFile(index)}>✕</button>
                   </div>
                 ))}
               </div>
@@ -217,8 +264,8 @@ export default function NewVehiclePage() {
           </div>
         </div>
 
-        <button type="submit" className={styles.submitBtn} disabled={loading}>
-          {loading ? "Creating..." : "Create Vehicle Listing"}
+        <button type="submit" className={styles.submitBtn} disabled={saving}>
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </div>
