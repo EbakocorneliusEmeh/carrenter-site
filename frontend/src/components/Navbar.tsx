@@ -43,6 +43,13 @@ export default function Navbar() {
           {isAuthenticated ? (
             <div className={styles.authLinks}>
               <Link 
+                className={pathname === "/customer/favorites" ? styles.active : ""} 
+                href="/customer/favorites"
+                title="My Saved Cars"
+              >
+                ❤️ Saved
+              </Link>
+              <Link 
                 className={pathname === "/profile" ? styles.active : ""} 
                 href="/profile"
               >

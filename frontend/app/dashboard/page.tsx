@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { listDealerPages } from "@/services/dealer.service";
 import { listPublicVehicles } from "@/services/public-vehicles.service";
+import { toggleFavorite, getUserFavorites } from "@/services/favorites.service";
 import type { DealerPage } from "@/types/auth.types";
 import type { Vehicle } from "@/types/vehicle.types";
 import { ListingType } from "@/types/vehicle.types";
@@ -21,6 +22,9 @@ export default function MainDashboard() {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [bookingVehicle, setBookingVehicle] = useState<Vehicle | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isDealer = user?.role?.toLowerCase() === "dealer";
 
@@ -38,12 +42,55 @@ export default function MainDashboard() {
   }, [isDealer, authLoading]);
 
   useEffect(() => {
-    if (authLoading) return;
-    listPublicVehicles()
-      .then((data) => setVehicles(Array.isArray(data) ? data : []))
-      .catch(() => setVehicles([]))
-      .finally(() => setVehiclesLoading(false));
-  }, [authLoading]);
+    async function fetchData() {
+      try {
+        const data = await listPublicVehicles();
+        setVehicles(data);
+
+        // Fetch favorites if user is logged in
+        if (user) {
+          const favData = await getUserFavorites();
+          const favSet = new Set<string>();
+          favData.forEach((f: any) => favSet.add(f.vehicle.id));
+          setFavorites(favSet);
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setVehiclesLoading(false);
+      }
+    }
+    fetchData();
+  }, [user]);
+
+  const handleToggleFavorite = async (e: React.MouseEvent, vehicleId: string) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please log in to save vehicles to your favorites.");
+      return;
+    }
+
+    // Save original state for revert
+    const originalFavs = new Set(favorites);
+
+    // Optimistic UI update
+    const newFavs = new Set(favorites);
+    if (newFavs.has(vehicleId)) {
+      newFavs.delete(vehicleId);
+    } else {
+      newFavs.add(vehicleId);
+    }
+    setFavorites(newFavs);
+
+    try {
+      await toggleFavorite(vehicleId);
+    } catch (err: any) {
+      // Revert on failure
+      setFavorites(originalFavs);
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to save favorite. Please try again.";
+      alert(msg);
+    }
+  };
 
   // Listen for openBooking event dispatched from VehicleDetailModal CTA
   useEffect(() => {
@@ -77,6 +124,19 @@ export default function MainDashboard() {
     if (type === ListingType.SALE) return styles.badgeSale;
     return styles.badgeBoth;
   }
+
+  const filteredVehicles = vehicles.filter((v) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchName = v.name?.toLowerCase().includes(q);
+      const matchBrand = v.brand?.toLowerCase().includes(q);
+      const matchModel = v.model?.toLowerCase().includes(q);
+      const matchFuel = v.fuelType?.toLowerCase().includes(q);
+      const matchTrans = v.transmission?.toLowerCase().includes(q);
+      if (!matchName && !matchBrand && !matchModel && !matchFuel && !matchTrans) return false;
+    }
+    return true;
+  });
 
   return (
     <div className={styles.container}>
@@ -113,10 +173,21 @@ export default function MainDashboard() {
             </div>
           )}
         </div>
-        <div>
+        <div className={styles.headerInfo}>
           <h1 className={styles.title}>
             Welcome back, {user?.fullName || "there"}!
           </h1>
+        </div>
+
+        {/* Global Search Bar */}
+        <div className={styles.headerSearch}>
+          <input 
+            type="text" 
+            className={styles.searchInput}
+            placeholder="Search make, model, fuel type, etc..." 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </header>
 
@@ -185,7 +256,7 @@ export default function MainDashboard() {
         )}
       </div>
 
-      {/* Available Vehicles */}
+      {/* Available Vehicles Section */}
       <section className={styles.vehiclesSection}>
         <div className={styles.vehiclesSectionHeader}>
           <h2 className={styles.sectionTitle}>🚗 Available Vehicles</h2>
@@ -193,13 +264,13 @@ export default function MainDashboard() {
 
         {vehiclesLoading ? (
           <p className={styles.vehiclesLoading}>Loading vehicles…</p>
-        ) : vehicles.length === 0 ? (
+        ) : filteredVehicles.length === 0 ? (
           <div className={styles.emptyVehicles}>
-            <p>No vehicles listed yet. Check back soon!</p>
+            <p>No vehicles match your search. Try different keywords!</p>
           </div>
         ) : (
           <div className={styles.vehiclesGrid}>
-            {vehicles.map((vehicle) => (
+            {filteredVehicles.map((vehicle) => (
               <div key={vehicle.id} className={styles.vehicleCard}>
                 {vehicle.images && vehicle.images.length > 0 ? (
                   <img
@@ -210,6 +281,13 @@ export default function MainDashboard() {
                 ) : (
                   <div className={styles.vehicleCardImage}>🚗</div>
                 )}
+                <button 
+                  className={`${styles.favoriteBtn} ${favorites.has(vehicle.id) ? styles.favoriteActive : ''}`}
+                  onClick={(e) => handleToggleFavorite(e, vehicle.id)}
+                  aria-label="Save to favorites"
+                >
+                  {favorites.has(vehicle.id) ? "❤️" : "🤍"}
+                </button>
                 <div className={styles.vehicleCardBody}>
                   <span className={`${styles.vehicleCardBadge} ${getBadgeClass(vehicle.listingType)}`}>
                     {vehicle.listingType}
