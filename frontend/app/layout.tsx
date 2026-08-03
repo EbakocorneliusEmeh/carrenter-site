@@ -1,6 +1,7 @@
  import type { Metadata } from "next";
  import type { ReactNode } from "react";
  import { AuthProvider } from "@/context/AuthContext";
+ import { ToastProvider } from "@/components/Toast";
  import Footer from "@/components/Footer";
  import Navbar from "@/components/Navbar";
  import "./globals.css";
@@ -19,11 +20,13 @@
      <html lang="en" suppressHydrationWarning>
        <body suppressHydrationWarning>
          <AuthProvider>
-           <div className="site-shell">
-             <Navbar />
-             <main className="site-main">{children}</main>
-             <Footer />
-           </div>
+           <ToastProvider>
+             <div className="site-shell">
+               <Navbar />
+               <main className="site-main">{children}</main>
+               <Footer />
+             </div>
+           </ToastProvider>
          </AuthProvider>
        </body>
      </html>

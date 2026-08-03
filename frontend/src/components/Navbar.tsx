@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./Navbar.module.css";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -42,13 +43,7 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <div className={styles.authLinks}>
-              <Link 
-                className={pathname === "/customer/favorites" ? styles.active : ""} 
-                href="/customer/favorites"
-                title="My Saved Cars"
-              >
-                ❤️ Saved
-              </Link>
+              <NotificationBell />
               <Link 
                 className={pathname === "/profile" ? styles.active : ""} 
                 href="/profile"

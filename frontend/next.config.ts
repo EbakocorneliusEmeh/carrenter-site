@@ -1,13 +1,23 @@
+// import type { NextConfig } from "next";
+
+// const nextConfig: NextConfig = {
+//   /* config options here */
+// };
+
+// export default nextConfig;
+
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: __dirname,
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "qbdcmtttrglzoudsxalp.supabase.co",
-        pathname: "/storage/v1/object/public/**",
-      },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "*.s3.amazonaws.com" },
     ],
   },
 };

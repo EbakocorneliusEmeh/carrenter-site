@@ -1,0 +1,102 @@
+.wrapper {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  margin-bottom: 36px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.summaryPills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pillGreen {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.pillLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.pillValue {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pillGreen .pillValue {
+  color: #16a34a;
+}
+
+.canvasWrap {
+  position: relative;
+  height: 260px;
+  width: 100%;
+}
+
+.emptyChart {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  gap: 8px;
+  text-align: center;
+}
+
+.emptyEmoji {
+  font-size: 2.5rem;
+}
+
+.emptyChart p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.emptyChart small {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+}

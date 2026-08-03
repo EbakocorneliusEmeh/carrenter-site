@@ -34,11 +34,7 @@ export default function ProfilePage() {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.header}>
-        <Link href="/" className={styles.backLink}>
-          ← Back to Home
-        </Link>
-      </div>
+
       <ProfileSettings />
     </div>
   );

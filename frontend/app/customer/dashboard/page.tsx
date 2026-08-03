@@ -7,6 +7,8 @@ import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { becomeDealer, getFriendlyError } from "@/services/auth.service";
 import { listCustomerBookings, cancelBooking, deleteBooking, type Booking } from "@/services/booking.service";
+import ReviewModal from "@/components/ReviewModal";
+import { useToast } from "@/components/Toast";
 import styles from "./page.module.css";
 
 type ActiveSection = "overview" | "rentals" | "profile" | "account" | "business";
@@ -87,6 +89,9 @@ function ContactDealerModal({ dealer, onClose }: { dealer: any, onClose: () => v
 function CustomerRentals({ bookings, loading, onCancel, onDelete, onContact }: {
   bookings: Booking[], loading: boolean, onCancel: (id:string)=>void, onDelete: (id:string)=>void, onContact: (dealer:any)=>void
 }) {
+  const [reviewBooking, setReviewBooking] = useState<{ id: string; vehicleName: string } | null>(null);
+  const { showToast } = useToast();
+
   if (loading) return <div style={{ padding: "2rem" }}>Loading rentals...</div>;
 
   if (!bookings.length) return (
@@ -142,10 +147,27 @@ function CustomerRentals({ bookings, loading, onCancel, onDelete, onContact }: {
             {b.status === "PENDING" && (
               <button className={styles.cancelBtn} onClick={() => onCancel(b.id)}>Cancel Request</button>
             )}
+            {b.status === "COMPLETED" && (
+              <button className={styles.reviewBtn} onClick={() => setReviewBooking({ id: b.id, vehicleName: `${b.vehicle?.brand} ${b.vehicle?.model}` })}>
+                ⭐ Leave a Review
+              </button>
+            )}
             <button className={styles.deleteBtn} onClick={() => onDelete(b.id)}>Delete Record</button>
           </div>
         </div>
       ))}
+
+      {reviewBooking && (
+        <ReviewModal
+          bookingId={reviewBooking.id}
+          vehicleName={reviewBooking.vehicleName}
+          onClose={() => setReviewBooking(null)}
+          onSuccess={() => {
+            showToast("Thank you for your review!", "success");
+            setReviewBooking(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -153,6 +175,7 @@ function CustomerRentals({ bookings, loading, onCancel, onDelete, onContact }: {
 /** Inner component that safely uses useSearchParams (must be inside Suspense) */
 function CustomerDashboardInner() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -204,8 +227,9 @@ function CustomerDashboardInner() {
     try {
       await cancelBooking(id);
       fetchBookings();
+      showToast("Booking cancelled successfully.", "info");
     } catch (e) {
-      alert("Failed to cancel");
+      showToast("Failed to cancel booking. Please try again.", "error");
     }
   };
 
@@ -214,8 +238,9 @@ function CustomerDashboardInner() {
     try {
       await deleteBooking(id);
       fetchBookings();
+      showToast("Booking record deleted.", "info");
     } catch (e) {
-      alert("Failed to delete");
+      showToast("Failed to delete record. Please try again.", "error");
     }
   };
 

@@ -3,14 +3,11 @@ import type {
   AuthTokens,
   AuthUser,
   BecomeDealerPayload,
-  ChangePasswordPayload,
   DealerProfile,
   ForgotPasswordPayload,
   LoginPayload,
   RegisterPayload,
   ResetPasswordPayload,
-  UpdateAvatarPayload,
-  UpdateProfilePayload,
 } from "@/types/auth.types";
 import { api, refreshClient, normalizeTokens, unwrapApiData } from "@/lib/axios";
 import { clearAuthSession, getRefreshToken, setAuthSession } from "@/utils/tokenStorage";
@@ -31,17 +28,14 @@ function normalizeUser(payload: any): AuthUser | null {
     return null;
   }
 
-  const customerProfile = user.customerProfile;
-  const dealerProfile = user.dealerProfile;
-
   return {
     id: user.id ?? user._id ?? user.userId ?? undefined,
-    fullName: user.fullName ?? customerProfile?.fullName ?? user.name ?? "",
+    fullName: user.fullName ?? user.name ?? "",
     email: user.email ?? "",
     phone: user.phone ?? "",
     role: typeof user.role === "string" ? user.role.toLowerCase() : "customer",
-    businessName: user.businessName ?? dealerProfile?.businessName ?? null,
-    avatarUrl: user.avatarUrl ?? customerProfile?.profilePhoto ?? null,
+    businessName: user.businessName ?? null,
+    avatarUrl: user.avatarUrl ?? null,
   };
 }
 
@@ -136,21 +130,13 @@ export async function refreshSession() {
     return null;
   }
 
-  // Save new tokens immediately so subsequent requests use the fresh access token
-  setAuthSession(tokens, null);
+  const currentUser = normalizeUser(response.data);
+  setAuthSession(tokens, currentUser);
 
-  // Now fetch the real user from DB (the only reliable source of the current role)
-  try {
-    const freshUser = await fetchUserProfile();
-    if (freshUser) {
-      setAuthSession(tokens, freshUser);
-      return { tokens, user: freshUser };
-    }
-  } catch {
-    // If profile fetch fails, return just the tokens with no user
-  }
-
-  return { tokens, user: null };
+  return {
+    tokens,
+    user: currentUser,
+  };
 }
 
 export async function fetchMe() {
@@ -233,64 +219,4 @@ export async function forgotPassword(payload: ForgotPasswordPayload) {
 export async function resetPassword(payload: ResetPasswordPayload) {
   const response = await api.post("/api/v1/auth/reset-password", payload);
   return normalizeSession(response.data);
-}
-
-export async function updateProfile(payload: UpdateProfilePayload) {
-  const response = await api.put("/api/v1/user/profile", payload);
-  const payloadData = unwrapApiData<any>(response.data);
-  const user = normalizeUser(payloadData);
-
-  if (user) {
-    const tokens = normalizeTokens(payloadData);
-    if (tokens) {
-      setAuthSession(tokens, user);
-    } else {
-      const currentRefreshToken = getRefreshToken();
-      if (currentRefreshToken) {
-        setAuthSession({
-          accessToken: currentRefreshToken,
-          refreshToken: currentRefreshToken,
-        }, user);
-      }
-    }
-  }
-
-  return user;
-}
-
-export async function changePassword(payload: ChangePasswordPayload) {
-  const response = await api.post("/api/v1/user/change-password", payload);
-  const payloadData = unwrapApiData<any>(response.data);
-  return payloadData?.message ?? "Password changed successfully";
-}
-
-export async function uploadAvatar(file: File) {
-  const formData = new FormData();
-  formData.append("avatar", file);
-
-  const response = await api.post("/api/v1/user/upload-avatar", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-  const payloadData = unwrapApiData<any>(response.data);
-  const user = normalizeUser(payloadData);
-
-  if (user) {
-    const tokens = normalizeTokens(payloadData);
-    if (tokens) {
-      setAuthSession(tokens, user);
-    } else {
-      const currentRefreshToken = getRefreshToken();
-      if (currentRefreshToken) {
-        setAuthSession({
-          accessToken: currentRefreshToken,
-          refreshToken: currentRefreshToken,
-        }, user);
-      }
-    }
-  }
-
-  return user;
 }

@@ -35,6 +35,8 @@ export interface Vehicle {
     businessName: string;
     slug: string | null;
   };
+  averageRating?: number;
+  totalReviews?: number;
 }
 
 export interface CreateVehicleImagePayload {

@@ -80,3 +80,8 @@ export async function deleteBooking(bookingId: string): Promise<Booking> {
   const response = await api.delete(`/api/v1/bookings/${bookingId}/delete`);
   return unwrapApiData<Booking>(response.data);
 }
+
+export async function getUnavailableDates(vehicleId: string): Promise<{ startDate: string; endDate: string }[]> {
+  const response = await api.get(`/api/v1/vehicles/${vehicleId}/unavailable-dates`);
+  return unwrapApiData<{ startDate: string; endDate: string }[]>(response.data);
+}

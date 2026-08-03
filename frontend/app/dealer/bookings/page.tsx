@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { listDealerBookings, updateBookingStatus, type Booking } from "@/services/booking.service";
+import { useToast } from "@/components/Toast";
 import styles from "./page.module.css";
 import Image from "next/image";
 
 export default function DealerBookingsPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +35,13 @@ export default function DealerBookingsPage() {
   const handleUpdateStatus = async (bookingId: string, newStatus: "APPROVED" | "REJECTED" | "COMPLETED") => {
     try {
       await updateBookingStatus(bookingId, newStatus);
-      // Update local state instantly for better UX
       setBookings(prev => 
         prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b)
       );
+      const labels: Record<string, string> = { APPROVED: "approved", REJECTED: "rejected", COMPLETED: "completed" };
+      showToast(`Booking ${labels[newStatus] ?? "updated"} successfully.`, "success");
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to update booking status");
+      showToast(err?.response?.data?.message || "Failed to update booking status.", "error");
     }
   };
 

@@ -5,6 +5,7 @@ import { getUserFavorites, toggleFavorite } from "@/services/favorites.service";
 import type { Vehicle } from "@/types/vehicle.types";
 import BookingModal from "@/components/BookingModal";
 import Link from "next/link";
+import dashboardStyles from "@/app/dashboard/page.module.css";
 import styles from "./page.module.css";
 
 export default function FavoritesPage() {
@@ -56,37 +57,64 @@ export default function FavoritesPage() {
           <Link href="/dashboard" className={styles.browseBtn}>Browse Vehicles</Link>
         </div>
       ) : (
-        <div className={styles.grid}>
+        <div className={dashboardStyles.vehiclesGrid}>
           {favorites.map(({ vehicle }) => (
-            <div key={vehicle.id} className={styles.card}>
-              <button 
-                className={styles.removeBtn}
-                onClick={() => handleRemove(vehicle.id)}
+            <div key={vehicle.id} className={dashboardStyles.vehicleCard}>
+              {/* Image */}
+              {vehicle.images && vehicle.images.length > 0 ? (
+                <img src={vehicle.images[0].url} alt={vehicle.name} className={dashboardStyles.vehicleCardImage} />
+              ) : (
+                <div className={dashboardStyles.vehicleCardImage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', background: '#f1f5f9' }}>🚗</div>
+              )}
+
+              {/* Badge overlaid on image */}
+              <span className={`${dashboardStyles.vehicleCardBadge} ${vehicle.listingType === 'RENT' ? dashboardStyles.badgeRent : vehicle.listingType === 'SALE' ? dashboardStyles.badgeSale : dashboardStyles.badgeBoth}`}>
+                {vehicle.listingType || 'RENT'}
+              </span>
+
+              {/* Favourite Remove */}
+              <button
+                className={`${dashboardStyles.favoriteBtn} ${dashboardStyles.favoriteActive}`}
+                onClick={(e) => { e.stopPropagation(); handleRemove(vehicle.id); }}
                 aria-label="Remove from favorites"
               >
-                ✕
+                ❤️
               </button>
-              {vehicle.images && vehicle.images.length > 0 ? (
-                <img
-                  src={vehicle.images[0].url}
-                  alt={vehicle.name}
-                  className={styles.cardImage}
-                />
-              ) : (
-                <div className={styles.cardImagePlaceholder}>🚗</div>
-              )}
-              <div className={styles.cardBody}>
-                <h3 className={styles.cardTitle}>{vehicle.year} {vehicle.brand} {vehicle.model}</h3>
-                <div className={styles.cardPrice}>
-                  {vehicle.dailyRentalPrice ? `${vehicle.dailyRentalPrice.toLocaleString()} FCFA / day` : 'Price on request'}
+
+              {/* Body */}
+              <div className={dashboardStyles.vehicleCardBody}>
+                <h3 className={dashboardStyles.vehicleCardTitle}>
+                  {vehicle.brand} {vehicle.model} <span className={dashboardStyles.vehicleYear}>({vehicle.year})</span>
+                </h3>
+
+                <div className={dashboardStyles.vehicleCardMeta}>
+                  <span className={dashboardStyles.vehicleCardSpecs}>{vehicle.fuelType} · {vehicle.transmission}</span>
                 </div>
-                <div className={styles.cardActions}>
-                  <Link href={`/dashboard`} className={styles.detailsLink}>View Details</Link>
-                  <button 
-                    className={styles.rentBtn}
-                    onClick={() => setBookingVehicle(vehicle)}
+
+                <p className={dashboardStyles.vehicleCardPrice}>
+                  {vehicle.listingType === 'RENT' ? `${vehicle.dailyRentalPrice} FCFA/day` : vehicle.listingType === 'SALE' ? `${vehicle.salePrice} FCFA` : `${vehicle.dailyRentalPrice} FCFA/day · ${vehicle.salePrice} FCFA (Buy)`}
+                </p>
+
+                <p className={dashboardStyles.vehicleCardMini}>
+                  📍 {vehicle.pickupLocation}
+                  {vehicle.dealer?.slug && (
+                    <> · Listed by: <Link href={`/business/${vehicle.dealer.slug}`} className={dashboardStyles.dealerLink}>{vehicle.dealer.businessName}</Link></>
+                  )}
+                </p>
+
+                <div className={dashboardStyles.cardActions}>
+                  <Link href="/dashboard" className={dashboardStyles.viewMoreBtn} style={{ textDecoration: 'none', textAlign: 'center' }}>
+                    Dashboard
+                  </Link>
+                  <button
+                    className={`${dashboardStyles.rentBtn} ${!vehicle.isAvailable ? dashboardStyles.rentBtnDisabled : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (vehicle.isAvailable) setBookingVehicle(vehicle);
+                    }}
+                    disabled={!vehicle.isAvailable}
                   >
-                    Rent Now
+                    {vehicle.isAvailable ? "Rent / Buy" : "Unavailable"}
                   </button>
                 </div>
               </div>

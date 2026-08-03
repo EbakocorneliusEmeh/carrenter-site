@@ -7,14 +7,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { listDealerPages } from "@/services/dealer.service";
 import { listPublicVehicles } from "@/services/public-vehicles.service";
 import { toggleFavorite, getUserFavorites } from "@/services/favorites.service";
+import { getVehicleReviews, type ReviewSummary, type Review } from "@/services/reviews.service";
 import type { DealerPage } from "@/types/auth.types";
 import type { Vehicle } from "@/types/vehicle.types";
 import { ListingType } from "@/types/vehicle.types";
 import styles from "./page.module.css";
 import BookingModal from "@/components/BookingModal";
+import { useToast } from "@/components/Toast";
 
 export default function MainDashboard() {
   const { user, isLoading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const [pages, setPages] = useState<DealerPage[]>([]);
   const [pagesLoading, setPagesLoading] = useState(true);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -25,6 +28,8 @@ export default function MainDashboard() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("ALL");
+  const [filterFuel, setFilterFuel] = useState<string>("ALL");
 
   const isDealer = user?.role?.toLowerCase() === "dealer";
 
@@ -66,7 +71,7 @@ export default function MainDashboard() {
   const handleToggleFavorite = async (e: React.MouseEvent, vehicleId: string) => {
     e.stopPropagation();
     if (!user) {
-      alert("Please log in to save vehicles to your favorites.");
+      showToast("Please log in to save vehicles to your favorites.", "warning");
       return;
     }
 
@@ -88,7 +93,7 @@ export default function MainDashboard() {
       // Revert on failure
       setFavorites(originalFavs);
       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to save favorite. Please try again.";
-      alert(msg);
+      showToast(msg, "error");
     }
   };
 
@@ -133,10 +138,16 @@ export default function MainDashboard() {
       const matchModel = v.model?.toLowerCase().includes(q);
       const matchFuel = v.fuelType?.toLowerCase().includes(q);
       const matchTrans = v.transmission?.toLowerCase().includes(q);
-      if (!matchName && !matchBrand && !matchModel && !matchFuel && !matchTrans) return false;
+      const matchLoc = v.pickupLocation?.toLowerCase().includes(q);
+      if (!matchName && !matchBrand && !matchModel && !matchFuel && !matchTrans && !matchLoc) return false;
     }
+    if (filterType !== "ALL" && v.listingType !== filterType) return false;
+    if (filterFuel !== "ALL" && v.fuelType?.toLowerCase() !== filterFuel.toLowerCase()) return false;
     return true;
   });
+
+  // Derive unique fuel types from loaded vehicles
+  const fuelTypes = ["ALL", ...Array.from(new Set(vehicles.map(v => v.fuelType).filter(Boolean)))];
 
   return (
     <div className={styles.container}>
@@ -262,6 +273,44 @@ export default function MainDashboard() {
           <h2 className={styles.sectionTitle}>🚗 Available Vehicles</h2>
         </div>
 
+        {/* Filter Bar */}
+        <div className={styles.filterBar}>
+          <div className={styles.filterGroup}>
+            <span className={styles.filterLabel}>Type:</span>
+            {["ALL", "RENT", "SALE", "BOTH"].map((type) => (
+              <button
+                key={type}
+                className={`${styles.filterChip} ${filterType === type ? styles.filterChipActive : ""}`}
+                onClick={() => setFilterType(type)}
+              >
+                {type === "ALL" ? "All" : type === "RENT" ? "Rent" : type === "SALE" ? "Sale" : "Rent & Buy"}
+              </button>
+            ))}
+          </div>
+          {fuelTypes.length > 1 && (
+            <div className={styles.filterGroup}>
+              <span className={styles.filterLabel}>Fuel:</span>
+              {fuelTypes.map((fuel) => (
+                <button
+                  key={fuel}
+                  className={`${styles.filterChip} ${filterFuel === fuel ? styles.filterChipActive : ""}`}
+                  onClick={() => setFilterFuel(fuel || "ALL")}
+                >
+                  {fuel === "ALL" ? "All" : fuel}
+                </button>
+              ))}
+            </div>
+          )}
+          {(filterType !== "ALL" || filterFuel !== "ALL") && (
+            <button
+              className={styles.filterClear}
+              onClick={() => { setFilterType("ALL"); setFilterFuel("ALL"); }}
+            >
+              ✕ Clear filters
+            </button>
+          )}
+        </div>
+
         {vehiclesLoading ? (
           <p className={styles.vehiclesLoading}>Loading vehicles…</p>
         ) : filteredVehicles.length === 0 ? (
@@ -272,61 +321,61 @@ export default function MainDashboard() {
           <div className={styles.vehiclesGrid}>
             {filteredVehicles.map((vehicle) => (
               <div key={vehicle.id} className={styles.vehicleCard}>
+                {/* Image */}
                 {vehicle.images && vehicle.images.length > 0 ? (
-                  <img
-                    src={vehicle.images[0].url}
-                    alt={vehicle.name}
-                    className={styles.vehicleCardImage}
-                  />
+                  <img src={vehicle.images[0].url} alt={vehicle.name} className={styles.vehicleCardImage} />
                 ) : (
-                  <div className={styles.vehicleCardImage}>🚗</div>
+                  <div className={styles.vehicleCardImage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', background: '#f1f5f9' }}>🚗</div>
                 )}
-                <button 
+
+                {/* Badge overlaid on image */}
+                <span className={`${styles.vehicleCardBadge} ${getBadgeClass(vehicle.listingType)}`}>
+                  {vehicle.listingType}
+                </span>
+
+                {/* Favourite */}
+                <button
                   className={`${styles.favoriteBtn} ${favorites.has(vehicle.id) ? styles.favoriteActive : ''}`}
                   onClick={(e) => handleToggleFavorite(e, vehicle.id)}
                   aria-label="Save to favorites"
                 >
-                  {favorites.has(vehicle.id) ? "❤️" : "🤍"}
+                  {favorites.has(vehicle.id) ? '❤️' : '🤍'}
                 </button>
+
+                {/* Body */}
                 <div className={styles.vehicleCardBody}>
-                  <span className={`${styles.vehicleCardBadge} ${getBadgeClass(vehicle.listingType)}`}>
-                    {vehicle.listingType}
-                  </span>
                   <h3 className={styles.vehicleCardTitle}>
-                    {vehicle.brand} {vehicle.model} ({vehicle.year})
+                    {vehicle.brand} {vehicle.model} <span className={styles.vehicleYear}>({vehicle.year})</span>
                   </h3>
-                  <p className={styles.vehicleCardDetails}>
-                    {vehicle.fuelType} · {vehicle.transmission}
-                  </p>
+
+                  <div className={styles.vehicleCardMeta}>
+                    <span className={styles.vehicleCardSpecs}>{vehicle.fuelType} · {vehicle.transmission}</span>
+                    {vehicle.totalReviews && vehicle.totalReviews > 0 ? (
+                      <span className={styles.vehicleCardRating}>★ {vehicle.averageRating} ({vehicle.totalReviews})</span>
+                    ) : (
+                      <span className={styles.vehicleCardNew}>No reviews</span>
+                    )}
+                  </div>
+
                   <p className={styles.vehicleCardPrice}>{getPriceLabel(vehicle)}</p>
-                  <p className={styles.vehicleCardLocation}>📍 {vehicle.pickupLocation}</p>
-                  {vehicle.dealer && vehicle.dealer.slug && (
-                    <p className={styles.vehicleCardDealer} style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                      Listed by: <Link href={`/business/${vehicle.dealer.slug}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}><strong>{vehicle.dealer.businessName}</strong></Link>
-                    </p>
-                  )}
+
+                  <p className={styles.vehicleCardMini}>
+                    📍 {vehicle.pickupLocation}
+                    {vehicle.dealer?.slug && (
+                      <> · Listed by: <Link href={`/business/${vehicle.dealer.slug}`} className={styles.dealerLink}>{vehicle.dealer.businessName}</Link></>
+                    )}
+                  </p>
+
                   <div className={styles.cardActions}>
-                    <button 
-                      className={styles.viewMoreBtn}
-                      onClick={() => setSelectedVehicle(vehicle)}
-                    >
+                    <button className={styles.viewMoreBtn} onClick={() => setSelectedVehicle(vehicle)}>
                       View Details
                     </button>
                     <a
                       href="#"
-                      className={styles.rentBtn}
-                      onClick={(e) => { 
-                        e.preventDefault(); 
-                        if (vehicle.isAvailable) setBookingVehicle(vehicle); 
-                      }}
-                      style={{
-                        opacity: vehicle.isAvailable ? 1 : 0.6,
-                        cursor: vehicle.isAvailable ? 'pointer' : 'not-allowed',
-                        backgroundColor: vehicle.isAvailable ? '' : 'var(--surface-border)',
-                        color: vehicle.isAvailable ? '' : 'var(--text-muted)'
-                      }}
+                      className={`${styles.rentBtn} ${!vehicle.isAvailable ? styles.rentBtnDisabled : ''}`}
+                      onClick={(e) => { e.preventDefault(); if (vehicle.isAvailable) setBookingVehicle(vehicle); }}
                     >
-                      {!vehicle.isAvailable ? "Unavailable" : vehicle.listingType === "SALE" ? "Enquire" : "Rent Now"}
+                      {!vehicle.isAvailable ? 'Unavailable' : vehicle.listingType === 'SALE' ? 'Enquire' : 'Rent Now'}
                     </a>
                   </div>
                 </div>
@@ -356,6 +405,65 @@ export default function MainDashboard() {
 }
 
 /* ═══════════════════════════════════════════════════════
+   Reviews Dropdown (shows latest first, expandable)
+   ═══════════════════════════════════════════════════════ */
+
+
+function ReviewCard({ rev }: { rev: Review }) {
+  return (
+    <div className={styles.reviewItem}>
+      <div className={styles.reviewHeader}>
+        <strong>{rev.reviewerName}</strong>
+        <span className={styles.reviewDate}>
+          {new Date(rev.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+      </div>
+      <div className={styles.reviewStars}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span key={i} style={{ color: i < rev.rating ? "#fbbf24" : "var(--surface-border)" }}>★</span>
+        ))}
+      </div>
+      {rev.comment && <p className={styles.reviewComment}>{rev.comment}</p>}
+    </div>
+  );
+}
+
+function ReviewsDropdown({ reviews }: { reviews: Review[] }) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Latest review is always first (backend already orders desc)
+  const latest = reviews[0];
+  const rest = reviews.slice(1);
+  const hasMore = rest.length > 0;
+
+  return (
+    <div className={styles.reviewsListBlock}>
+      <div className={styles.reviewsHeader}>
+        <h3 className={styles.featuresTitle}>Customer Reviews</h3>
+        {hasMore && (
+          <button
+            className={styles.reviewsToggleBtn}
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? "▲ Show less" : `▼ Show all ${reviews.length} reviews`}
+          </button>
+        )}
+      </div>
+
+      <div className={styles.reviewsList}>
+        {/* Always show the latest */}
+        <ReviewCard rev={latest} />
+
+        {/* Show rest only when expanded */}
+        {expanded && rest.map((rev) => (
+          <ReviewCard key={rev.id} rev={rev} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
    Vehicle Detail Modal (General Dashboard)
    ═══════════════════════════════════════════════════════ */
 
@@ -366,7 +474,12 @@ interface VehicleDetailModalProps {
 
 function VehicleDetailModal({ vehicle, onClose }: VehicleDetailModalProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
   const images = vehicle.images && vehicle.images.length > 0 ? vehicle.images : [];
+
+  useEffect(() => {
+    getVehicleReviews(vehicle.id).then(setReviewSummary).catch(console.error);
+  }, [vehicle.id]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -461,6 +574,19 @@ function VehicleDetailModal({ vehicle, onClose }: VehicleDetailModalProps) {
               <p className={styles.detailDealer} style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
                 Listed by: <Link href={`/business/${vehicle.dealer.slug}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}><strong>{vehicle.dealer.businessName}</strong></Link>
               </p>
+            )}
+
+            {/* Rating Summary */}
+            {reviewSummary && reviewSummary.totalReviews > 0 && (
+              <div className={styles.detailRatingBlock}>
+                <div className={styles.detailRatingHeader}>
+                  <span className={styles.detailRatingScore}>{reviewSummary.averageRating}</span>
+                  <span className={styles.detailRatingStar}>★</span>
+                </div>
+                <div className={styles.detailRatingText}>
+                  Based on {reviewSummary.totalReviews} review{reviewSummary.totalReviews > 1 ? 's' : ''}
+                </div>
+              </div>
             )}
 
             {/* Pricing */}
@@ -561,6 +687,11 @@ function VehicleDetailModal({ vehicle, onClose }: VehicleDetailModalProps) {
             <div className={styles.availabilityBadge} data-available={vehicle.isAvailable}>
               {vehicle.isAvailable ? "✓ Available" : "✗ Unavailable"}
             </div>
+
+            {/* Reviews List */}
+            {reviewSummary && reviewSummary.totalReviews > 0 && (
+              <ReviewsDropdown reviews={reviewSummary.reviews} />
+            )}
 
             {/* Modal CTA */}
             <div className={styles.modalCtaBlock}>

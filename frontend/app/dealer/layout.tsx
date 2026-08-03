@@ -1,32 +1,52 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import styles from "./layout.module.css";
+
+const NAV_LINKS = [
+  { href: "/dealer/dashboard", label: "📊 Analytics" },
+  { href: "/dealer/vehicles", label: "🚗 My Vehicles" },
+  { href: "/dealer/bookings", label: "📋 Bookings" },
+  { href: "/dealer/settings", label: "⚙️ Settings" },
+  { href: "/customer/favorites", label: "❤️ Saved Vehicles" },
+];
 
 export default function DealerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user } = useAuth();
+  const pathname = usePathname();
+
   return (
-    <div className={styles.layout}>
+    <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.logo}>DriveNow Dealer</div>
-        <nav className={styles.nav}>
-          <Link href="/dealer/vehicles" className={styles.navLink}>
-            🚗 Vehicles
-          </Link>
-          <Link href="/dealer/bookings" className={styles.navLink}>
-            📅 Bookings
-          </Link>
-          <Link href="/dealer/settings" className={styles.navLink}>
-            ⚙️ Settings
-          </Link>
-          <hr className={styles.divider} />
-          <Link href="/" className={styles.navLink}>
-            🏠 Back to Home
-          </Link>
+        <div className={styles.sidebarBrand}>
+          <span className={styles.sidebarIcon}>🏢</span>
+          <div>
+            <div className={styles.sidebarTitle}>Dealer Portal</div>
+            <div className={styles.sidebarSubtitle}>{user?.businessName || user?.fullName || "Loading..."}</div>
+          </div>
+        </div>
+        <nav className={styles.sidebarNav}>
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`${styles.navLink} ${pathname === link.href ? styles.navLinkActive : ""}`}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
+        <div className={styles.sidebarFooter}>
+          <Link href="/dashboard" className={styles.backBtn}>← Public View</Link>
+        </div>
       </aside>
-      <main className={styles.mainContent}>{children}</main>
+      <main className={styles.main}>{children}</main>
     </div>
   );
 }

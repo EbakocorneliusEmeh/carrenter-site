@@ -7,9 +7,11 @@ import { listVehicles, deleteVehicle } from "@/services/vehicles.service";
 import type { Vehicle } from "@/types/vehicle.types";
 import { ListingType } from "@/types/vehicle.types";
 import styles from "./page.module.css";
+import { useToast } from "@/components/Toast";
 
 export default function VehiclesPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -35,9 +37,10 @@ export default function VehiclesPage() {
     try {
       await deleteVehicle(id);
       setVehicles((prev) => prev.filter((v) => v.id !== id));
+      showToast("Vehicle deleted successfully.", "success");
     } catch (err) {
       console.error("Failed to delete vehicle", err);
-      alert("Failed to delete vehicle. Please try again.");
+      showToast("Failed to delete vehicle. Please try again.", "error");
     } finally {
       setDeletingId(null);
     }

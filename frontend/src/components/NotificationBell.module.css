@@ -1,0 +1,186 @@
+.wrapper {
+  position: relative;
+}
+
+/* ─── Bell button ──────────────────────────────────────── */
+.bell {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+  transition: background 0.15s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.bell:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+.badge {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 2px solid white;
+  line-height: 1;
+}
+
+/* ─── Dropdown ─────────────────────────────────────────── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdownTitle {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.markAllBtn {
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: #16a34a;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.markAllBtn:hover {
+  background: #f0fdf4;
+}
+
+/* ─── List ─────────────────────────────────────────────── */
+.list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.empty span {
+  font-size: 2rem;
+}
+
+.empty p {
+  margin: 0;
+}
+
+/* ─── Notification item ────────────────────────────────── */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f8fafc;
+  position: relative;
+}
+
+.item:hover {
+  background: #f8fafc;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemUnread {
+  background: #f0fdf4;
+}
+
+.itemUnread:hover {
+  background: #dcfce7;
+}
+
+.itemIcon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.itemBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 3px;
+}
+
+.itemMessage {
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+
+.itemTime {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  flex-shrink: 0;
+  margin-top: 6px;
+}

@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import type { Vehicle } from "@/types/vehicle.types";
 import { ListingType } from "@/types/vehicle.types";
-import { createBooking } from "@/services/booking.service";
+import { createBooking, getUnavailableDates } from "@/services/booking.service";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { parseISO, eachDayOfInterval, isSameDay } from "date-fns";
 import styles from "./BookingModal.module.css";
 
 interface BookingModalProps {
@@ -19,12 +22,36 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
     vehicle.listingType === ListingType.SALE ||
     vehicle.listingType === ListingType.BOTH;
 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch unavailable dates
+  useEffect(() => {
+    if (isRent) {
+      getUnavailableDates(vehicle.id).then((intervals) => {
+        const dates: Date[] = [];
+        intervals.forEach((interval) => {
+          if (interval.startDate && interval.endDate) {
+            dates.push(...eachDayOfInterval({ 
+              start: parseISO(interval.startDate), 
+              end: parseISO(interval.endDate) 
+            }));
+          }
+        });
+        setUnavailableDates(dates);
+      }).catch(console.error);
+    }
+  }, [vehicle.id, isRent]);
+
+  const isDateBooked = (date: Date) => {
+    return unavailableDates.some((unavailableDate) => isSameDay(date, unavailableDate));
+  };
+
 
   // Escape key to close
   useEffect(() => {
@@ -45,7 +72,7 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
       ? Math.max(
           1,
           Math.ceil(
-            (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+            (endDate.getTime() - startDate.getTime()) /
               (1000 * 60 * 60 * 24)
           )
         )
@@ -55,7 +82,8 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
       ? vehicle.dailyRentalPrice * numDays
       : null;
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,17 +93,24 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
       setError("Please select your rental start and end dates.");
       return;
     }
-    if (startDate && endDate && new Date(endDate) <= new Date(startDate)) {
+    if (startDate && endDate && endDate < startDate) {
       setError("End date must be after start date.");
       return;
     }
 
     try {
       setIsSubmitting(true);
+      
+      // Convert to local ISO strings for backend
+      const formatLocalDate = (date: Date) => {
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString();
+      };
+
       await createBooking({
         vehicleId: vehicle.id,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
+        startDate: startDate ? formatLocalDate(startDate) : undefined,
+        endDate: endDate ? formatLocalDate(endDate) : undefined,
         totalPrice: totalPrice ?? undefined,
         message: message || undefined,
       });
@@ -146,13 +181,19 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
                   <label className={styles.label} htmlFor="startDate">
                     📅 Start Date
                   </label>
-                  <input
-                    id="startDate"
-                    type="date"
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => {
+                      setStartDate(date);
+                      if (endDate && date && date > endDate) setEndDate(null);
+                    }}
+                    selectsStart
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={today}
+                    filterDate={(date) => !isDateBooked(date)}
+                    placeholderText="Select start date"
                     className={styles.input}
-                    value={startDate}
-                    min={today}
-                    onChange={(e) => setStartDate(e.target.value)}
                     required={isRent}
                   />
                 </div>
@@ -160,13 +201,16 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
                   <label className={styles.label} htmlFor="endDate">
                     📅 End Date
                   </label>
-                  <input
-                    id="endDate"
-                    type="date"
+                  <DatePicker
+                    selected={endDate}
+                    onChange={(date) => setEndDate(date)}
+                    selectsEnd
+                    startDate={startDate}
+                    endDate={endDate}
+                    minDate={startDate || today}
+                    filterDate={(date) => !isDateBooked(date)}
+                    placeholderText="Select end date"
                     className={styles.input}
-                    value={endDate}
-                    min={startDate || today}
-                    onChange={(e) => setEndDate(e.target.value)}
                     required={isRent}
                   />
                 </div>

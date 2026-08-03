@@ -499,10 +499,24 @@
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid var(--surface-border);
-  background: var(--surface);
+}
+.cancelBtn {
+  background: var(--surface-strong);
+  border: 1px solid var(--surface-border);
   color: var(--text);
 }
-.cancelBtn:hover { background: var(--surface-strong); }
+.cancelBtn:hover {
+  background: var(--surface-border);
+}
+
+.reviewBtn {
+  background: #f59e0b;
+  border: none;
+  color: white;
+}
+.reviewBtn:hover {
+  background: #d97706;
+}
 .deleteBtn {
   border-color: rgba(239, 68, 68, 0.3);
   color: #ef4444;
