@@ -5,8 +5,11 @@ import type {
 } from "@/types/auth.types";
 import { api, unwrapApiData } from "@/lib/axios";
 
-export async function createDealerPage(payload: CreateDealerPagePayload) {
-  const response = await api.post("/api/v1/dealer/pages", payload);
+export async function createDealerPage(payload: CreateDealerPagePayload | FormData) {
+  const isFormData = payload instanceof FormData;
+  const response = await api.post("/api/v1/dealer/pages", payload, {
+    headers: isFormData ? { "Content-Type": "multipart/form-data" } : undefined,
+  });
   return unwrapApiData<DealerPage>(response.data);
 }
 
@@ -27,8 +30,11 @@ export async function getDealerPageBySlug(slug: string) {
   return unwrapApiData<DealerPage>(response.data);
 }
 
-export async function updateDealerPage(id: string, payload: UpdateDealerPagePayload) {
-  const response = await api.put(`/api/v1/dealer/pages/${id}`, payload);
+export async function updateDealerPage(id: string, payload: UpdateDealerPagePayload | FormData) {
+  const isFormData = payload instanceof FormData;
+  const response = await api.put(`/api/v1/dealer/pages/${id}`, payload, {
+    headers: isFormData ? { "Content-Type": "multipart/form-data" } : undefined,
+  });
   return unwrapApiData<DealerPage>(response.data);
 }
 

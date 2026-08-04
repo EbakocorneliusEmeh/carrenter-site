@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { getPublicDealerPageBySlug } from "@/services/dealer.service";
+import { getDealerPageBySlug as getPublicDealerPageBySlug } from "@/services/dealer.service";
 import type { PublicDealerPage } from "@/types/auth.types";
 import type { Vehicle } from "@/types/vehicle.types";
 import styles from "./page.module.css";

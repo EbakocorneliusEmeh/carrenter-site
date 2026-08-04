@@ -8,6 +8,8 @@ import type {
   LoginPayload,
   RegisterPayload,
   ResetPasswordPayload,
+  ChangePasswordPayload,
+  UpdateProfilePayload,
 } from "@/types/auth.types";
 import { api, refreshClient, normalizeTokens, unwrapApiData } from "@/lib/axios";
 import { clearAuthSession, getRefreshToken, setAuthSession } from "@/utils/tokenStorage";
@@ -219,4 +221,23 @@ export async function forgotPassword(payload: ForgotPasswordPayload) {
 export async function resetPassword(payload: ResetPasswordPayload) {
   const response = await api.post("/api/v1/auth/reset-password", payload);
   return normalizeSession(response.data);
+}
+
+export async function changePassword(payload: ChangePasswordPayload) {
+  const response = await api.post("/api/v1/auth/change-password", payload);
+  return response.data;
+}
+
+export async function updateProfile(payload: Partial<UpdateProfilePayload>) {
+  const response = await api.put("/api/v1/user/profile", payload);
+  return response.data;
+}
+
+export async function uploadAvatar(file: File) {
+  const formData = new FormData();
+  formData.append("avatar", file);
+  const response = await api.post("/api/v1/user/upload-avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
 }

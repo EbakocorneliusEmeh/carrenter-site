@@ -5,7 +5,7 @@ import { getUserFavorites, toggleFavorite } from "@/services/favorites.service";
 import type { Vehicle } from "@/types/vehicle.types";
 import BookingModal from "@/components/BookingModal";
 import Link from "next/link";
-import dashboardStyles from "@/app/dashboard/page.module.css";
+import dashboardStyles from "../dashboard/page.module.css";
 import styles from "./page.module.css";
 
 export default function FavoritesPage() {

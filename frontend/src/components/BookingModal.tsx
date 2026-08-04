@@ -183,7 +183,7 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
                   </label>
                   <DatePicker
                     selected={startDate}
-                    onChange={(date) => {
+                    onChange={(date: Date | null) => {
                       setStartDate(date);
                       if (endDate && date && date > endDate) setEndDate(null);
                     }}
@@ -203,7 +203,7 @@ export default function BookingModal({ vehicle, onClose }: BookingModalProps) {
                   </label>
                   <DatePicker
                     selected={endDate}
-                    onChange={(date) => setEndDate(date)}
+                    onChange={(date: Date | null) => setEndDate(date)}
                     selectsEnd
                     startDate={startDate}
                     endDate={endDate}
