@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getVehicle, updateVehicle } from "@/services/vehicles.service";
 import type { Vehicle } from "@/types/vehicle.types";
 import { ListingType } from "@/types/vehicle.types";
+import type { ListingType as ListingTypeValue } from "@/types/vehicle.types";
 import styles from "../../new/page.module.css";
 import editStyles from "./page.module.css";
 
@@ -26,7 +27,19 @@ export default function EditVehiclePage() {
   // Existing images from DB
   const [existingImages, setExistingImages] = useState<{ id: string; url: string }[]>([]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    brand: string;
+    model: string;
+    year: number;
+    registrationNumber: string;
+    fuelType: string;
+    transmission: string;
+    listingType: ListingTypeValue;
+    dailyRentalPrice: string;
+    salePrice: string;
+    pickupLocation: string;
+    isAvailable: string;
+  }>({
     brand: "",
     model: "",
     year: new Date().getFullYear(),

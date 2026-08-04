@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createVehicle } from "@/services/vehicles.service";
 import { ListingType } from "@/types/vehicle.types";
+import type { ListingType as ListingTypeValue } from "@/types/vehicle.types";
 import styles from "./page.module.css";
 
 export default function NewVehiclePage() {
@@ -13,7 +14,18 @@ export default function NewVehiclePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [files, setFiles] = useState<File[]>([]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    brand: string;
+    model: string;
+    year: number;
+    registrationNumber: string;
+    fuelType: string;
+    transmission: string;
+    listingType: ListingTypeValue;
+    dailyRentalPrice: string;
+    salePrice: string;
+    pickupLocation: string;
+  }>({
     brand: "",
     model: "",
     year: new Date().getFullYear(),

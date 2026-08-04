@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { UserRole } from "@/types/auth.types";
+
+// Inline type to keep middleware fully self-contained on the Edge Runtime.
+// Do NOT import from other project files here — even type-only imports can
+// pull transitive dependencies that break the Edge bundler.
+type UserRole = "customer" | "dealer" | "admin";
 
 const AUTH_ROUTE_PREFIXES = [
   "/login",

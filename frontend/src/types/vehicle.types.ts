@@ -1,8 +1,10 @@
-export enum ListingType {
-  RENT = 'RENT',
-  SALE = 'SALE',
-  BOTH = 'BOTH',
-}
+export const ListingType = {
+  RENT: 'RENT',
+  SALE: 'SALE',
+  BOTH: 'BOTH',
+} as const;
+
+export type ListingType = typeof ListingType[keyof typeof ListingType];
 
 export interface VehicleImage {
   id: string;
