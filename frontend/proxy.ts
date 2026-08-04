@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { UserRole } from "@/types/auth.types";
+
+// Inline type to keep middleware fully self-contained on the Edge Runtime.
+// Do NOT import from other project files here — even type-only imports can
+// pull transitive dependencies that break the Edge bundler.
+type UserRole = "customer" | "dealer" | "admin";
 
 const AUTH_ROUTE_PREFIXES = [
   "/login",
@@ -10,22 +14,15 @@ const AUTH_ROUTE_PREFIXES = [
 
 const PROTECTED_PREFIXES = [
   "/profile",
+  "/dashboard",
   "/customer",
   "/dealer",
   "/admin",
 ];
 
-function getDashboardPath(role: UserRole | undefined | null) {
-  switch (role) {
-    case "customer":
-      return "/customer/dashboard";
-    case "dealer":
-      return "/dealer/dashboard";
-    case "admin":
-      return "/admin/dashboard";
-    default:
-      return "/profile";
-  }
+function getDashboardPath(_role?: UserRole | null) {
+  // All roles land on the same smart general dashboard
+  return "/dashboard";
 }
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
@@ -34,7 +31,7 @@ function matchesPrefix(pathname: string, prefixes: string[]) {
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const accessToken = request.cookies.get("carrent_access_token")?.value;
   const role = request.cookies.get("carrent_role")?.value as UserRole | undefined;
@@ -43,22 +40,20 @@ export function middleware(request: NextRequest) {
   const isAuthRoute = matchesPrefix(pathname, AUTH_ROUTE_PREFIXES);
   const isProtectedRoute = matchesPrefix(pathname, PROTECTED_PREFIXES);
 
-  // Allow `/dashboard` to be a unified landing page for authenticated users.
-  // If unauthenticated, redirect to login preserving `next` param.
+  // Handle legacy/unprefixed `/dashboard` path by redirecting to login if unauthenticated.
   if (pathname === "/dashboard") {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname + search);
       return NextResponse.redirect(loginUrl);
     }
-
-    return NextResponse.next();
+    // If authenticated and on /dashboard, do nothing, just let them in.
   }
 
   if (isAuthRoute && isAuthenticated) {
-    // If an authenticated user visits auth routes, send them to the
-    // unified main dashboard where they can choose next steps.
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(
+      new URL(getDashboardPath(role), request.url),
+    );
   }
 
   if (isProtectedRoute && !isAuthenticated) {
@@ -67,20 +62,22 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  const lowerRole = role?.toLowerCase();
+
   if (
     isProtectedRoute &&
-    role &&
+    lowerRole &&
     pathname.startsWith("/customer") &&
-    role !== "customer"
+    lowerRole !== "customer"
   ) {
     return NextResponse.redirect(new URL(getDashboardPath(role), request.url));
   }
 
-  if (isProtectedRoute && pathname.startsWith("/dealer") && role !== "dealer") {
+  if (isProtectedRoute && pathname.startsWith("/dealer") && lowerRole !== "dealer") {
     return NextResponse.redirect(new URL(getDashboardPath(role), request.url));
   }
 
-  if (isProtectedRoute && pathname.startsWith("/admin") && role !== "admin") {
+  if (isProtectedRoute && pathname.startsWith("/admin") && lowerRole !== "admin") {
     return NextResponse.redirect(new URL(getDashboardPath(role), request.url));
   }
 
@@ -92,3 +89,4 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api).*)",
   ],
 };
+
