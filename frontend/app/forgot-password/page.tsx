@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const res = await api.post("/api/v1/auth/forgot-password", { identifier });
-      setMessage(res.data?.message || "Reset link sent! Check your email.");
+      setMessage(res.data?.message || "Check your email for a reset link. Click it to set a new password.");
     } catch (err: any) {
       const msg = err?.response?.data?.message;
       setError(Array.isArray(msg) ? msg.join(" ") : msg || "Something went wrong. Please try again.");
@@ -40,12 +40,16 @@ export default function ForgotPasswordPage() {
           <p className={styles.kicker}>Account Recovery</p>
           <h1>Forgot your password?</h1>
           <p>
-            Enter your email address or phone number and we&apos;ll send a
-            password reset link to your email.
+            Enter your registered email or phone number. We&apos;ll send a
+            password reset link to your email address.
           </p>
         </div>
 
-        {message && <div className={`${styles.message} ${styles.success}`}>{message}</div>}
+        {message && (
+          <div className={`${styles.message} ${styles.success}`}>
+            ✓ {message}
+          </div>
+        )}
         {error && <div className={`${styles.message} ${styles.error}`}>{error}</div>}
 
         {!message && (
@@ -63,7 +67,7 @@ export default function ForgotPasswordPage() {
             </label>
 
             <button type="submit" className={styles.button} disabled={isSubmitting}>
-              {isSubmitting ? "Sending..." : "Send Reset Link"}
+            {isSubmitting ? "Sending..." : "Send Reset Link"}
             </button>
           </form>
         )}

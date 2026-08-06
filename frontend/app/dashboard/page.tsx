@@ -150,7 +150,19 @@ export default function MainDashboard() {
   const fuelTypes = ["ALL", ...Array.from(new Set(vehicles.map(v => v.fuelType).filter(Boolean)))];
 
   return (
-    <div className={styles.container}>
+    <div className={styles.pageWrapper}>
+      <div className={styles.globalBackground}>
+        <Image
+          src="/images/dashboard-bg-2.png"
+          alt="Luxury Dashboard"
+          fill
+          className={styles.globalImage}
+          priority
+        />
+        <div className={styles.globalOverlay} />
+      </div>
+
+      <div className={styles.container}>
       {/* Image Modal */}
       {isImageModalOpen && user?.avatarUrl && (
         <div className={styles.imageModal} onClick={() => setIsImageModalOpen(false)}>
@@ -400,6 +412,7 @@ export default function MainDashboard() {
           onClose={() => setBookingVehicle(null)}
         />
       )}
+    </div>
     </div>
   );
 }

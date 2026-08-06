@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { listVehicles, deleteVehicle } from "@/services/vehicles.service";
 import type { Vehicle } from "@/types/vehicle.types";
@@ -51,7 +52,19 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.pageWrapper}>
+      <div className={styles.globalBackground}>
+        <Image
+          src="/images/dealer-bg.png"
+          alt="Dealer Dashboard"
+          fill
+          className={styles.globalImage}
+          priority
+        />
+        <div className={styles.globalOverlay} />
+      </div>
+
+      <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.title}>My Vehicles</h1>
         <Link href="/dealer/vehicles/new" className={styles.addButton}>
@@ -135,6 +148,7 @@ export default function VehiclesPage() {
           onClose={() => setSelectedVehicle(null)}
         />
       )}
+    </div>
     </div>
   );
 }
