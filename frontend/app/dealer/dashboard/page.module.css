@@ -315,3 +315,28 @@
 }
 
 
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Dealer Analytics Dashboard
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .dateBadge { align-self: flex-start; }
+
+  .statsGrid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .statValue { font-size: 1.5rem; }
+
+  .quickActions { gap: 8px; }
+  .actionCard { padding: 10px 14px; font-size: 0.85rem; }
+
+  .reviewsGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .statsGrid { grid-template-columns: 1fr; }
+}

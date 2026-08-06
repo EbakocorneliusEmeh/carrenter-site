@@ -1,85 +1,95 @@
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./page.module.css";
 
 const features = [
   {
-    title: "Role-based access",
-    description:
-      "Separate journeys for customers, dealers, and admins with protected dashboards.",
+    icon: "🛡️",
+    title: "Premium Fleet Access",
+    description: "Browse an exclusive collection of high-end vehicles from verified, top-tier dealers.",
   },
   {
-    title: "Token refresh",
-    description:
-      "Automatic refresh handling keeps authenticated users moving without extra login prompts.",
+    icon: "⚡",
+    title: "Seamless Booking",
+    description: "Reserve your dream car instantly with our streamlined, secure booking process.",
   },
   {
-    title: "Modern auth screens",
-    description:
-      "Responsive forms, validation, loading states, and polished feedback for every auth step.",
+    icon: "💎",
+    title: "Transparent Pricing",
+    description: "No hidden fees. Experience luxury with upfront costs and premium support.",
   },
 ];
 
 export default function HomePage() {
   return (
-    <section className={styles.page}>
-      <div className={styles.hero}>
-        <div className={styles.copy}>
-          <p className={styles.kicker}>CarRent — Your Journey Starts Here</p>
-          <h1>Drive away in your dream car today.</h1>
-          <p className={styles.description}>
-            Experience the easiest way to rent a car. Whether you are looking for a weekend getaway or a long-term rental, CarRent connects you with top dealers and the best vehicles. Business owners can also join to list and manage their own fleets effortlessly.
+    <div className={styles.page}>
+      {/* Hero Section */}
+      <section className={styles.heroSection}>
+        <div className={styles.heroBackground}>
+          <Image
+            src="/images/hero-bg.png"
+            alt="Luxury SUV on a coastal road"
+            fill
+            className={styles.heroImage}
+            priority
+          />
+          <div className={styles.heroOverlay} />
+        </div>
+        
+        <div className={styles.heroContent}>
+          <div className={styles.badge}>Experience Luxury</div>
+          <h1 className={styles.heroTitle}>Drive away in your dream car today.</h1>
+          <p className={styles.heroDescription}>
+            The premier platform for high-end vehicle rentals. Whether for a weekend getaway or a long-term lease, CarRent connects you with the world&apos;s best vehicles.
           </p>
-
-          <div className={styles.actions}>
+          <div className={styles.heroActions}>
             <Link className={styles.primaryButton} href="/register">
-              Get Started
+              Start Your Journey
             </Link>
             <Link className={styles.secondaryButton} href="/login">
-              Login to Account
+              Sign In
             </Link>
           </div>
         </div>
+      </section>
 
-        <div className={styles.heroCard}>
-          <p className={styles.heroLabel}>Why Choose CarRent</p>
-          <ul className={styles.heroList}>
-            <li>Vast selection of premium vehicles</li>
-            <li>Transparent pricing with no hidden fees</li>
-            <li>Dedicated dealer tools and business dashboards</li>
-            <li>Seamless booking and profile management</li>
-          </ul>
+      {/* How It Works Section */}
+      <section className={styles.howItWorksSection}>
+        <div className={styles.sectionHeader}>
+          <h2>How It Works</h2>
+          <p>Your journey begins in three simple steps.</p>
         </div>
-      </div>
-
-      <div className={styles.howItWorks}>
-        <h2>How It Works</h2>
         <div className={styles.stepsGrid}>
           <div className={styles.stepCard}>
-            <div className={styles.stepNumber}>1</div>
+            <div className={styles.stepNumber}>01</div>
             <h3>Create an Account</h3>
-            <p>Sign up in seconds. Verify your profile to unlock full access to our extensive vehicle network.</p>
+            <p>Sign up in seconds and get verified to unlock full access to our exclusive fleet.</p>
           </div>
           <div className={styles.stepCard}>
-            <div className={styles.stepNumber}>2</div>
+            <div className={styles.stepNumber}>02</div>
             <h3>Find Your Car</h3>
-            <p>Browse through hundreds of listings from top-rated dealers and find the perfect match for your needs.</p>
+            <p>Browse through hundreds of listings from top-rated dealers and find the perfect match.</p>
           </div>
           <div className={styles.stepCard}>
-            <div className={styles.stepNumber}>3</div>
+            <div className={styles.stepNumber}>03</div>
             <h3>Hit the Road</h3>
             <p>Book instantly, pick up your keys, and enjoy the ride. Our platform makes it that simple.</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className={styles.featureGrid}>
-        {features.map((feature) => (
-          <article key={feature.title} className={styles.featureCard}>
-            <h2>{feature.title}</h2>
-            <p>{feature.description}</p>
-          </article>
-        ))}
-      </div>
-    </section>
+      {/* Features Section */}
+      <section className={styles.featuresSection}>
+        <div className={styles.featuresGrid}>
+          {features.map((feature) => (
+            <div key={feature.title} className={styles.featureCard}>
+              <div className={styles.featureIcon}>{feature.icon}</div>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

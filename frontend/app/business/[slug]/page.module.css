@@ -1154,3 +1154,56 @@ a.contactValue:hover {
     font-size: 1.1rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Business/Slug Page
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .heroBanner { height: 220px; }
+
+  .profileHeaderInner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 16px 20px;
+    gap: 12px;
+  }
+
+  .logoWrapper { margin-top: -50px; }
+  .logo, .logoPlaceholder { width: 100px; height: 100px; font-size: 2.5rem; }
+
+  .businessName { font-size: 1.6rem; }
+
+  .metaRow { justify-content: center; }
+
+  .quickContact {
+    margin-left: 0;
+    justify-content: center;
+    width: 100%;
+    padding-top: 8px;
+  }
+
+  .contactChip { padding: 8px 14px; font-size: 0.82rem; }
+
+  .mainContent { padding: 20px 14px 60px; }
+
+  .infoGrid { grid-template-columns: 1fr; gap: 14px; }
+
+  .vehicleGrid { grid-template-columns: 1fr; gap: 16px; }
+
+  /* Modals */
+  .modalOverlay { padding: 0; align-items: flex-end; }
+  .modalContent {
+    max-height: 95vh;
+    border-radius: 20px 20px 0 0;
+    max-width: 100%;
+  }
+  .modalBody { grid-template-columns: 1fr; }
+  .detailsSection { border-left: none; border-top: 1px solid var(--surface-border); padding: 16px; }
+  .gallerySection { padding: 14px; }
+}
+
+@media (max-width: 480px) {
+  .vehicleActions { flex-direction: column; }
+  .inquireBtn, .viewMoreBtn, .rentNowBtn { min-width: 0; width: 100%; }
+}

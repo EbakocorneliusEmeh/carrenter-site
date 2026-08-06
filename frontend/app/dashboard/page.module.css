@@ -1,4 +1,35 @@
+/* ─── Global Dashboard Background ──────────────── */
+.pageWrapper {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.globalBackground {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.globalImage {
+  object-fit: cover;
+  object-position: center;
+}
+
+.globalOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 14, 11, 0.2) 0%,
+    rgba(9, 14, 11, 0.7) 100%
+  );
+  backdrop-filter: blur(2px);
+}
+
 .container {
+  position: relative;
+  z-index: 1;
   max-width: 1100px;
   margin: 0 auto;
   padding: 48px 24px;
@@ -11,13 +42,31 @@
   font-size: 1rem;
 }
 
+/* ─── Dashboard Hero ─────────────────── */
+.dashboardHero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ─── Header ─────────────────────── */
 .header {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 36px;
+  margin-bottom: 2rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .headerInfo {
@@ -83,12 +132,11 @@
 
 /* ─── CTA Banner ─────────────────── */
 .ctaBanner {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-xl);
   padding: 32px;
-  box-shadow: var(--shadow);
-  margin-bottom: 36px;
+  backdrop-filter: blur(20px);
 }
 
 .ctaContent {
@@ -1207,4 +1255,107 @@
   .detailTitle { font-size: 1.3rem; }
   .specsGrid { gap: 8px; }
   .detailPriceValue { font-size: 1.1rem; }
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Main Dashboard
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+
+  .headerSearch {
+    margin-left: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .avatarWrapper {
+    width: 56px;
+    height: 56px;
+  }
+
+  .greetingName {
+    font-size: 1.4rem;
+  }
+
+  /* CTA Banners */
+  .ctaBanner {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .ctaActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Filters */
+  .filtersBar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .filterGroup {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filterBtn {
+    flex: 1;
+    min-width: calc(50% - 3px);
+    text-align: center;
+    justify-content: center;
+  }
+
+  .filterClear {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Vehicle grid — single column on mobile */
+  .vehiclesGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Pages list */
+  .pageItem {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .pageItemIcon {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 12px;
+  }
+
+  .greetingName {
+    font-size: 1.2rem;
+  }
+
+  .vehicleCard {
+    border-radius: var(--radius-lg);
+  }
 }

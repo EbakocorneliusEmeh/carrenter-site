@@ -133,3 +133,11 @@
 .footer a:hover {
   text-decoration: underline;
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Forgot Password
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .card { padding: 1.75rem 1.25rem; }
+  .header h1 { font-size: 1.5rem; }
+}

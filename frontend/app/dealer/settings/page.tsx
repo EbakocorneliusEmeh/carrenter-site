@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 import {
   createDealerPage,
   listDealerPages,
@@ -221,7 +222,19 @@ export default function DealerSettings() {
   };
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.pageWrapper}>
+      <div className={styles.globalBackground}>
+        <Image
+          src="/images/settings-bg.png"
+          alt="Dealer Settings Background"
+          fill
+          className={styles.globalImage}
+          priority
+        />
+        <div className={styles.globalOverlay} />
+      </div>
+
+      <div className={styles.dashboardContainer}>
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Settings</h1>
@@ -594,6 +607,7 @@ export default function DealerSettings() {
           </form>
         </section>
       )}
+    </div>
     </div>
   );
 }

@@ -1,7 +1,38 @@
+/* ─── Global Background ─────────────────── */
+.pageWrapper {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.globalBackground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.globalImage {
+  object-fit: cover;
+  object-position: center;
+}
+
+.globalOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 14, 11, 0.4) 0%,
+    rgba(9, 14, 11, 0.85) 100%
+  );
+  backdrop-filter: blur(4px);
+}
+
 .container {
-  padding: 0;
+  position: relative;
+  z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 48px 24px;
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -20,7 +51,7 @@
 .title {
   font-size: 2rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -50,20 +81,22 @@
 
 /* ─── Vehicle Card ─────────────────────────────────────── */
 .card {
-  background: white;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+  position: relative;
+  backdrop-filter: blur(12px);
 }
 
 .card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  border-color: #cbd5e1;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  border-color: var(--primary);
 }
 
 .cardImagePlaceholder {
@@ -86,15 +119,15 @@
 }
 
 .cardTitle {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin: 0 0 4px 0;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .cardDetails {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-muted);
   margin: 0 0 8px 0;
   font-weight: 500;
 }
@@ -125,8 +158,8 @@
 
 .price {
   font-size: 1.15rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 800;
+  color: var(--primary);
   margin-bottom: 12px;
   margin-top: auto;
 }
@@ -191,17 +224,18 @@
 .emptyState {
   text-align: center;
   padding: 80px 20px;
-  background: white;
-  border-radius: 20px;
-  border: 2px dashed #e2e8f0;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  border: 2px dashed var(--surface-border);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  backdrop-filter: blur(12px);
 }
 
 .emptyState p {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 1.1rem;
   margin: 0;
 }
@@ -629,5 +663,49 @@
 
   .gallerySection { padding: 20px; }
   .detailTitle { font-size: 1.5rem; }
+  .specsGrid { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Dealer Vehicles
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .container { padding: 16px 12px; }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .addButton { width: 100%; text-align: center; }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .cardActions { gap: 6px; }
+  .editBtn, .deleteBtn, .viewBtn { padding: 10px 6px; font-size: 0.8rem; }
+
+  /* Modal full-screen on mobile */
+  .modalOverlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modalContent {
+    max-height: 95vh;
+    border-radius: 20px 20px 0 0;
+    max-width: 100%;
+  }
+  .modalBody { grid-template-columns: 1fr; }
+  .detailsSection { border-left: none; border-top: 1px solid var(--surface-border); padding: 20px 16px; }
+  .gallerySection { padding: 16px; }
+  .specsGrid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  .cardContent { padding: 10px; }
   .specsGrid { grid-template-columns: 1fr; }
 }

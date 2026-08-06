@@ -340,3 +340,14 @@
     padding: 24px 20px;
   }
 }
+
+/* ─── Enhanced Mobile ─────────────────────────────── */
+@media (max-width: 480px) {
+  .avatarSection { gap: 16px; padding: 20px 16px; }
+  .avatar, .avatarPlaceholder { width: 80px; height: 80px; }
+  .avatarInfo h3 { font-size: 1.1rem; }
+  .tabs { gap: 8px; overflow-x: auto; }
+  .tabBtn { font-size: 0.9rem; white-space: nowrap; }
+  .form { padding: 16px; }
+  .formGroup input { padding: 12px 14px; }
+}
