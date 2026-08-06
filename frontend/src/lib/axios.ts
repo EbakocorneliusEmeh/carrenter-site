@@ -8,7 +8,7 @@ import {
 } from "@/utils/tokenStorage";
 import type { AuthTokens } from "@/types/auth.types";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const api = axios.create({
   baseURL,
