@@ -32,12 +32,20 @@ function normalizeUser(payload: any): AuthUser | null {
 
   return {
     id: user.id ?? user._id ?? user.userId ?? undefined,
-    fullName: user.fullName ?? user.name ?? "",
+    fullName:
+      user.fullName ??
+      user.name ??
+      user.customerProfile?.fullName ??
+      "",
     email: user.email ?? "",
     phone: user.phone ?? "",
     role: typeof user.role === "string" ? user.role.toLowerCase() : "customer",
     businessName: user.businessName ?? null,
-    avatarUrl: user.avatarUrl ?? null,
+    // Backend stores avatar in customerProfile.profilePhoto
+    avatarUrl:
+      user.avatarUrl ??
+      user.customerProfile?.profilePhoto ??
+      null,
   };
 }
 
