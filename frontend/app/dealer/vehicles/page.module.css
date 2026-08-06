@@ -665,3 +665,47 @@
   .detailTitle { font-size: 1.5rem; }
   .specsGrid { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Dealer Vehicles
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .container { padding: 16px 12px; }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .addButton { width: 100%; text-align: center; }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .cardActions { gap: 6px; }
+  .editBtn, .deleteBtn, .viewBtn { padding: 10px 6px; font-size: 0.8rem; }
+
+  /* Modal full-screen on mobile */
+  .modalOverlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modalContent {
+    max-height: 95vh;
+    border-radius: 20px 20px 0 0;
+    max-width: 100%;
+  }
+  .modalBody { grid-template-columns: 1fr; }
+  .detailsSection { border-left: none; border-top: 1px solid var(--surface-border); padding: 20px 16px; }
+  .gallerySection { padding: 16px; }
+  .specsGrid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  .cardContent { padding: 10px; }
+  .specsGrid { grid-template-columns: 1fr; }
+}

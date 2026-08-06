@@ -7,8 +7,14 @@
  import "./globals.css";
 
  export const metadata: Metadata = {
-   title: "CarRent Auth",
-   description: "Authentication frontend for the Car Rental System",
+   title: "DriveNow — Premium Car Rentals",
+   description: "Find and rent premium vehicles from trusted dealers near you.",
+ };
+
+ export const viewport = {
+   width: "device-width",
+   initialScale: 1,
+   maximumScale: 1,
  };
 
  export default function RootLayout({

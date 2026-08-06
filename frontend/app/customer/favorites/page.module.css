@@ -66,3 +66,14 @@
   background: var(--primary-strong);
   transform: translateY(-2px);
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Customer Favorites
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .container { padding: 20px 14px; }
+  .title { font-size: 1.5rem; }
+  .loading { padding: 60px 20px; }
+  .emptyState { padding: 50px 16px; }
+  .browseBtn { width: 100%; text-align: center; }
+}

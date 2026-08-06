@@ -234,23 +234,81 @@
 
 @media (max-width: 768px) {
   .heroSection {
-    min-height: 80vh;
-    padding: 6rem 1.5rem 4rem;
+    min-height: 100svh;
+    padding: 5rem 1.25rem 3rem;
   }
-  
+
+  .heroTitle {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+
+  .heroDescription {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+
   .heroActions {
     flex-direction: column;
     width: 100%;
+    gap: 0.75rem;
   }
-  
+
   .primaryButton,
   .secondaryButton {
     width: 100%;
+    height: 3rem;
+    font-size: 1rem;
   }
-  
+
   .howItWorksSection,
   .featuresSection {
-    padding-top: 4rem;
-    padding-bottom: 4rem;
+    padding: 3rem 1.25rem;
+  }
+
+  .sectionHeader {
+    margin-bottom: 2rem;
+  }
+
+  .sectionHeader h2 {
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+  }
+
+  .stepsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stepCard {
+    padding: 2rem 1.5rem;
+  }
+
+  .stepNumber {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .featuresGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .featureCard {
+    padding: 1.75rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: clamp(1.75rem, 10vw, 2.5rem);
+  }
+
+  .heroSection {
+    padding: 4.5rem 1rem 2.5rem;
   }
 }

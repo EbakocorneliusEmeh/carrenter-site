@@ -348,3 +348,11 @@
 
   .datesRow { grid-template-columns: 1fr; }
 }
+
+/* ─── Enhanced Mobile ─────────────────────────────── */
+@media (max-width: 480px) {
+  .header { padding: 16px; }
+  .form { padding: 16px; gap: 14px; }
+  .submitBtn { padding: 13px; font-size: 0.95rem; }
+  .successState { padding: 36px 20px; }
+}

@@ -457,3 +457,32 @@ textarea.input {
   background-position: center;
   border: 1px solid var(--surface-border);
 }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Dealer Settings
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .dashboardContainer { padding: 16px 12px 60px; }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .primaryBtn { width: 100%; text-align: center; }
+
+  .pagesGrid { grid-template-columns: 1fr; }
+
+  .formRow { grid-template-columns: 1fr; }
+
+  .createForm { padding: 20px 16px; }
+
+  .formActions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .submitBtn, .cancelBtn { width: 100%; }
+}
